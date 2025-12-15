@@ -724,7 +724,7 @@ const GameCanvas: React.FC = () => {
 
       {/* Touch Controls Overlay */}
       {gameState === GameState.PLAYING && (
-        <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-end pb-4 px-4 md:hidden">
+        <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-end pb-4 px-4 lg:hidden">
             <div className="flex justify-between items-end w-full select-none mb-2">
                 {/* D-Pad (Larger for mobile) */}
                 <div className="flex gap-4 pointer-events-auto">
@@ -745,7 +745,7 @@ const GameCanvas: React.FC = () => {
                 </div>
                 
                 {/* Jump (Larger for mobile) */}
-                <div className="pointer-events-auto">
+                <div className="pointer-events-auto pl-8">
                     <button 
                         className="w-28 h-28 bg-blue-500/20 rounded-full backdrop-blur-md border-2 border-blue-400/40 active:bg-blue-500/40 flex items-center justify-center transition-all active:scale-95 shadow-lg"
                         onTouchStart={handleTouchStart('Space')}
