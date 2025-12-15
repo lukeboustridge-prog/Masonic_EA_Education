@@ -11,6 +11,13 @@ const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
   // Generate the sprite URL on the fly based on the orb's sprite key
   const spriteUrl = useMemo(() => generateSpriteUrl(orb.spriteKey), [orb.spriteKey]);
 
+  // Determine button text based on context
+  const buttonText = useMemo(() => {
+    if (orb.questionId !== undefined) return "Proceed to Quiz";
+    if (orb.spriteKey === 'apron') return "Put On Apron";
+    return "Collect";
+  }, [orb.questionId, orb.spriteKey]);
+
   return (
     // 1. Overlay: Fixed centering with padding
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
@@ -62,7 +69,7 @@ const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
             transition-all shadow-lg
           "
         >
-          Proceed to Quiz
+          {buttonText}
         </button>
       </div>
     </div>

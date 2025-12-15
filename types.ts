@@ -32,7 +32,7 @@ export interface Orb {
   y: number;
   radius: number;
   active: boolean;
-  questionId: number;
+  questionId?: number;
   // New Lore Fields
   name: string;
   spriteKey: string;
@@ -44,7 +44,7 @@ export interface OrbDefinition {
   x: number;
   yOffset: number;
   radius: number;
-  questionId: number;
+  questionId?: number;
   name: string;
   spriteKey: string;
   blurb: string;

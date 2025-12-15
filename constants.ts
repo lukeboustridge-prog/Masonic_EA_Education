@@ -262,7 +262,27 @@ const TOOLS = {
 
 export const ORB_DATA: OrbDefinition[] = [
   // --- Start / Preparation ---
-  { id: 1, x: 400, yOffset: -50, radius: 20, questionId: 1, ...TOOLS.APRON },
+  // Orb 1: The First Apron (No Question, Instructional)
+  { 
+    id: 1, 
+    x: 400, 
+    yOffset: -50, 
+    radius: 20, 
+    ...TOOLS.APRON,
+    blurb: "The Lambskin Apron is the badge of innocence and the bond of friendship. It is the first gift bestowed upon you. You are now permitted to wear it."
+    // No questionId provided -> Skips Quiz
+  },
+  
+  // New Orb 21: Recycled Question 1 (The First Care)
+  { 
+    id: 21, 
+    x: 700, // On the platform at x:650
+    yOffset: -200, 
+    radius: 20, 
+    questionId: 1, 
+    ...TOOLS.APRON 
+  },
+
   { id: 2, x: 800, yOffset: -300, radius: 20, questionId: 2, ...TOOLS.APRON },
   
   // --- Tower 1 ---

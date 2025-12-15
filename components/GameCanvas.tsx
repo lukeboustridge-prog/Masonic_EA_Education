@@ -55,6 +55,9 @@ const GameCanvas: React.FC = () => {
   // Asset Loading
   const spritesRef = useRef<Record<string, HTMLImageElement>>({});
 
+  // Fullscreen tracking
+  const hasTriedFullscreenRef = useRef(false);
+
   // --- Initialization & Resize ---
   useEffect(() => {
     const handleResize = () => {
@@ -160,6 +163,26 @@ const GameCanvas: React.FC = () => {
       gain.gain.linearRampToValueAtTime(0.01, now + 1.0);
       osc.start(now);
       osc.stop(now + 1.0);
+    }
+  };
+
+  // Helper to trigger fullscreen
+  const enterFullscreen = () => {
+    if (hasTriedFullscreenRef.current) return;
+    hasTriedFullscreenRef.current = true;
+
+    try {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {
+          // Silent fail for browsers that don't support or deny it
+        });
+      } else if ((docEl as any).webkitRequestFullscreen) {
+        // Fallback for older Safari/Chrome webview implementations
+        (docEl as any).webkitRequestFullscreen();
+      }
+    } catch (e) {
+      // Ignore errors (iOS Safari throws here often)
     }
   };
 
@@ -675,14 +698,20 @@ const GameCanvas: React.FC = () => {
         
         // Logic: Have we seen this lore type (spriteKey) before?
         if (seenLoreRef.current.has(orb.spriteKey)) {
-            // Yes: Skip Lore, go straight to Quiz
-            const question = QUESTIONS.find(q => q.id === orb.questionId);
-            if (question) {
-                setActiveQuestion(question);
-                setGameState(GameState.QUIZ);
-                playSound('lore'); // Still play the sound
+            // Yes: Skip Lore, go straight to Quiz (if questionId exists)
+            // If it's a "no question" orb (like the first apron), just equip it.
+            if (orb.questionId !== undefined) {
+                 const question = QUESTIONS.find(q => q.id === orb.questionId);
+                 if (question) {
+                     setActiveQuestion(question);
+                     setGameState(GameState.QUIZ);
+                     playSound('lore'); 
+                 } else {
+                     handleCorrectAnswer(); 
+                 }
             } else {
-                handleCorrectAnswer(); // Fallback if question missing
+                // No question, just collect/equip
+                handleCorrectAnswer();
             }
         } else {
             // No: Show Lore Modal
@@ -871,6 +900,12 @@ const GameCanvas: React.FC = () => {
   // Lore Handler
   const handleLoreContinue = () => {
       if (activeOrb) {
+        // If questionId is missing, skip quiz
+        if (activeOrb.questionId === undefined) {
+             handleCorrectAnswer();
+             return;
+        }
+
         const question = QUESTIONS.find(q => q.id === activeOrb.questionId);
         if (question) {
             setActiveQuestion(question);
@@ -913,6 +948,10 @@ const GameCanvas: React.FC = () => {
   // Touch Handlers
   const handleTouchStart = (key: string) => (e: React.TouchEvent) => {
     e.preventDefault(); 
+    
+    // Attempt fullscreen on first touch
+    enterFullscreen();
+
     if (key === 'Space') {
       executeJump();
     }
