@@ -7,6 +7,7 @@ import {
 } from '../constants';
 import QuizModal from './QuizModal';
 import LoreModal from './LoreModal';
+import { generateSpriteUrl } from '../utils/assetGenerator';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -20,6 +21,7 @@ const GameCanvas: React.FC = () => {
   const [score, setScore] = useState(0);
   const [activeOrb, setActiveOrb] = useState<Orb | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
+  const [checkpointPopup, setCheckpointPopup] = useState(false);
 
   // Mutable Game State
   const playerRef = useRef<Player>({
@@ -37,6 +39,7 @@ const GameCanvas: React.FC = () => {
   
   // Checkpoint State
   const lastCheckpointRef = useRef({ x: 50, y: DESIGN_HEIGHT - 100 });
+  const checkpointTimeoutRef = useRef<number | null>(null);
   
   // Camera now tracks X and Y
   const cameraRef = useRef({ x: 0, y: 0 });
@@ -75,10 +78,15 @@ const GameCanvas: React.FC = () => {
 
   // Preload Sprites
   useEffect(() => {
+    // Orb/Item Sprites
     const uniqueKeys = Array.from(new Set(ORB_DATA.map(o => o.spriteKey)));
+    // Add Checkpoint Sprite
+    uniqueKeys.push('square_compass');
+    
     uniqueKeys.forEach(key => {
         const img = new Image();
-        img.src = `/sprites/${key}.png`;
+        // Generate sprite on the fly
+        img.src = generateSpriteUrl(key);
         spritesRef.current[key] = img;
     });
   }, []);
@@ -434,6 +442,9 @@ const GameCanvas: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    
+    // CRITICAL: Ensure we get pixelated scaling for our generated retro sprites
+    ctx.imageSmoothingEnabled = false;
 
     // Use current dimensions state
     const { w, h } = dimensions;
@@ -495,10 +506,21 @@ const GameCanvas: React.FC = () => {
     player.y += player.vy;
 
     // Checkpoints Update
-    for (const cpX of CHECKPOINTS) {
-        if (player.x > cpX && cpX > lastCheckpointRef.current.x) {
+    for (const cp of CHECKPOINTS) {
+        // Only update if we passed it AND it's further than the last one
+        if (player.x > cp.x && cp.x > lastCheckpointRef.current.x) {
             // Update last checkpoint
-            lastCheckpointRef.current = { x: cpX + 50, y: groundRefY - 100 };
+            lastCheckpointRef.current = { x: cp.x, y: groundRefY + cp.yOffset - 100 };
+
+            // Trigger UI Notification
+            setCheckpointPopup(true);
+            playSound('lore'); // Use existing pleasant sound
+            
+            // Auto-hide after 3 seconds
+            if (checkpointTimeoutRef.current) window.clearTimeout(checkpointTimeoutRef.current);
+            checkpointTimeoutRef.current = window.setTimeout(() => {
+                setCheckpointPopup(false);
+            }, 3000);
         }
     }
 
@@ -633,6 +655,36 @@ const GameCanvas: React.FC = () => {
     // We pass logical width/height (viewW, viewH)
     drawCastleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
 
+    // Draw Checkpoints
+    CHECKPOINTS.forEach(cp => {
+        // Draw the Square and Compass sprite
+        const cpImg = spritesRef.current['square_compass'];
+        // Check if passed (active)
+        const isPassed = lastCheckpointRef.current.x >= cp.x;
+        
+        const cpX = cp.x;
+        const cpY = groundRefY + cp.yOffset - 50; // Float slightly above ground
+        
+        if (cpImg) {
+            ctx.save();
+            ctx.globalAlpha = isPassed ? 1.0 : 0.3; // Dim if not reached
+            if (isPassed) {
+                // Glow if active
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#fbbf24';
+            }
+            // Draw slightly larger
+            ctx.drawImage(cpImg, cpX - 20, cpY, 40, 40);
+            ctx.restore();
+        } else {
+            // Fallback
+            ctx.fillStyle = isPassed ? '#fbbf24' : '#475569';
+            ctx.beginPath();
+            ctx.arc(cpX, cpY + 20, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
     // Draw Platforms (Updated with Procedural Stone)
     platforms.forEach(plat => {
       // Determine roughness based on progression
@@ -723,6 +775,7 @@ const GameCanvas: React.FC = () => {
     orbsStateRef.current.clear();
     setScore(0);
     lastCheckpointRef.current = { x: 50, y: DESIGN_HEIGHT - 100 }; // Reset checkpoint to start
+    setCheckpointPopup(false);
     cameraRef.current = { x: 0, y: 0 };
     setGameState(GameState.PLAYING);
   };
@@ -799,6 +852,21 @@ const GameCanvas: React.FC = () => {
         </div>
         <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm">
           <span className="text-cyan-400 font-mono text-xl">{score}</span>
+        </div>
+      </div>
+
+      {/* Checkpoint Notification */}
+      <div className={`absolute top-20 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none transition-all duration-500 ${checkpointPopup ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+        <div className="bg-slate-900/90 border-2 border-amber-500 px-6 py-3 rounded-xl flex items-center gap-4 shadow-[0_0_20px_rgba(245,158,11,0.3)] backdrop-blur-md">
+           <img 
+             src={generateSpriteUrl('square_compass')} 
+             className="w-8 h-8 md:w-12 md:h-12 animate-pulse" 
+             style={{ imageRendering: 'pixelated' }}
+           />
+           <div>
+             <h3 className="text-amber-400 font-bold text-lg md:text-xl uppercase tracking-widest">Checkpoint</h3>
+             <p className="text-slate-400 text-xs md:text-sm">Progress Saved</p>
+           </div>
         </div>
       </div>
 

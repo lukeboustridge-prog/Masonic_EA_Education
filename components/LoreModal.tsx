@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Orb } from '../types';
+import { generateSpriteUrl } from '../utils/assetGenerator';
 
 interface LoreModalProps {
   orb: Orb;
@@ -7,6 +8,9 @@ interface LoreModalProps {
 }
 
 const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
+  // Generate the sprite URL on the fly based on the orb's sprite key
+  const spriteUrl = useMemo(() => generateSpriteUrl(orb.spriteKey), [orb.spriteKey]);
+
   return (
     // 1. Overlay: Fixed centering with padding
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
@@ -30,16 +34,11 @@ const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
         {/* Sprite Display - Significantly smaller on mobile (w-20) */}
         <div className="my-3 md:my-6 p-2 md:p-4 bg-slate-800 rounded-full border-4 border-slate-700 shadow-inner shrink-0">
             <img 
-                src={`/sprites/${orb.spriteKey}.png`} 
+                src={spriteUrl} 
                 alt={orb.name}
                 // Mobile: w-20 h-20 (80px), Desktop: w-32 h-32 (128px)
-                className="w-20 h-20 md:w-32 md:h-32 object-contain pixelated rendering-pixelated"
-                onError={(e) => {
-                    // Fallback if image not found
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.innerText = orb.name[0];
-                    e.currentTarget.parentElement!.className = "my-3 md:my-6 w-20 h-20 md:w-32 md:h-32 flex items-center justify-center text-2xl md:text-4xl font-bold text-amber-500 bg-slate-800 rounded-full border-4 border-slate-700";
-                }}
+                className="w-20 h-20 md:w-32 md:h-32 object-contain"
+                style={{ imageRendering: 'pixelated' }}
             />
         </div>
 

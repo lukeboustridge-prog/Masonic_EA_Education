@@ -13,7 +13,16 @@ export const WORLD_WIDTH = 8000;
 // Reduced to 360 to zoom in the camera for better mobile visibility
 export const DESIGN_HEIGHT = 360;
 
-export const CHECKPOINTS = [0, 1200, 2150, 3000, 4300, 5100, 6900];
+// Checkpoints with visual coordinates (x, yOffset from ground)
+export const CHECKPOINTS = [
+  { x: 50, yOffset: 0 },   // Start
+  { x: 1200, yOffset: 0 }, // Tower Base
+  { x: 2150, yOffset: 0 }, // Hills
+  { x: 3000, yOffset: 150 }, // Mines (Lower)
+  { x: 4300, yOffset: -50 }, // Bridge
+  { x: 5100, yOffset: 0 }, // High Tower Base
+  { x: 6900, yOffset: 0 }  // Final Stretch
+];
 
 export const QUESTIONS: Question[] = [
   {
@@ -103,7 +112,7 @@ export const QUESTIONS: Question[] = [
   {
     id: 15,
     text: "What rests on top of Jacob's Ladder?",
-    answers: ["The V.S.L.", "The Heavens", "The Blazing Star"],
+    answers: ["The Heavens", "The Blazing Star"],
     correctAnswer: "The Heavens"
   },
   {
