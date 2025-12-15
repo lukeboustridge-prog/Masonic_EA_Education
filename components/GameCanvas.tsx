@@ -7,7 +7,6 @@ import {
 } from '../constants';
 import QuizModal from './QuizModal';
 import LoreModal from './LoreModal';
-import { generateSpriteUrl } from '../utils/assetGenerator';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -180,8 +179,8 @@ const GameCanvas: React.FC = () => {
 
     uniqueKeys.forEach(key => {
         const img = new Image();
-        // Generate sprite on the fly
-        img.src = generateSpriteUrl(key);
+        // Load direct from static folder
+        img.src = `/sprites/${key}.png`;
         spritesRef.current[key] = img;
     });
   }, []);
@@ -1037,7 +1036,7 @@ const GameCanvas: React.FC = () => {
           {/* Left: Login & Intro */}
           <div className="flex-1 flex flex-col items-center text-center space-y-6">
              <div>
-                <img src={generateSpriteUrl('square_compass')} className="w-20 h-20 mx-auto mb-4" style={{imageRendering:'pixelated'}}/>
+                <img src="/sprites/square_compass.png" className="w-20 h-20 mx-auto mb-4" style={{imageRendering:'pixelated'}}/>
                 <h1 className="text-3xl md:text-4xl font-bold text-amber-500 font-serif tracking-widest uppercase">The Entered Apprentice Challenge</h1>
                 <p className="text-slate-400 mt-2 italic">A Journey to Master the First Degree</p>
              </div>
@@ -1141,7 +1140,7 @@ const GameCanvas: React.FC = () => {
         </div>
         <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm flex items-center gap-3">
           {hasApron && (
-             <img src={generateSpriteUrl('apron')} className="w-6 h-6 object-contain" style={{imageRendering:'pixelated'}} title="Apron Equipped"/>
+             <img src="/sprites/apron.png" className="w-6 h-6 object-contain" style={{imageRendering:'pixelated'}} title="Apron Equipped"/>
           )}
           <div className="flex flex-col items-end leading-none">
               <span className="text-cyan-400 font-mono text-xl">{score}</span>
@@ -1154,7 +1153,7 @@ const GameCanvas: React.FC = () => {
       <div className={`absolute top-20 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none transition-all duration-500 ${checkpointPopup ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
         <div className="bg-slate-900/90 border-2 border-amber-500 px-6 py-3 rounded-xl flex items-center gap-4 shadow-[0_0_20px_rgba(245,158,11,0.3)] backdrop-blur-md">
            <img 
-             src={generateSpriteUrl('square_compass')} 
+             src="/sprites/square_compass.png" 
              className="w-8 h-8 md:w-12 md:h-12 animate-pulse" 
              style={{ imageRendering: 'pixelated' }}
            />
