@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Orb } from '../types';
+import { generateSpriteUrl } from '../utils/assetGenerator';
 
 interface LoreModalProps {
   orb: Orb;
@@ -7,8 +8,8 @@ interface LoreModalProps {
 }
 
 const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
-  // Use static sprite path
-  const spriteUrl = `/sprites/${orb.spriteKey}.png`;
+  // Generate the sprite URL on the fly based on the orb's sprite key
+  const spriteUrl = useMemo(() => generateSpriteUrl(orb.spriteKey), [orb.spriteKey]);
 
   // Determine button text based on context
   const buttonText = useMemo(() => {
