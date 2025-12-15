@@ -776,6 +776,7 @@ const GameCanvas: React.FC = () => {
     setScore(0);
     lastCheckpointRef.current = { x: 50, y: DESIGN_HEIGHT - 100 }; // Reset checkpoint to start
     setCheckpointPopup(false);
+    setActiveQuestion(null); // Clear question state
     cameraRef.current = { x: 0, y: 0 };
     setGameState(GameState.PLAYING);
   };
@@ -929,41 +930,41 @@ const GameCanvas: React.FC = () => {
         />
       )}
 
-      {/* Game Over / Proficiency Failed Screen */}
-      {gameState === GameState.GAME_OVER && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-red-950/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="max-w-xl w-full bg-slate-900 border-4 border-red-600 rounded-xl p-8 shadow-2xl flex flex-col items-center text-center">
+      {/* Game Over / Education Screen */}
+      {gameState === GameState.GAME_OVER && activeQuestion && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="max-w-xl w-full bg-slate-900 border-4 border-amber-600 rounded-xl p-8 shadow-2xl flex flex-col items-center text-center">
             
-            <div className="w-20 h-20 bg-red-900/50 rounded-full flex items-center justify-center mb-6 border-4 border-red-500">
-                <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+            <div className="w-20 h-20 bg-amber-900/30 rounded-full flex items-center justify-center mb-6 border-4 border-amber-500">
+                <svg className="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-red-500 mb-4 uppercase tracking-wider">
-              Proficiency Failed
+            <h2 className="text-2xl md:text-3xl font-bold text-amber-400 mb-2 uppercase tracking-wider">
+              Further Light Required
             </h2>
             
-            <p className="text-slate-200 text-lg md:text-xl mb-6 leading-relaxed">
-              To complete this degree, you must demonstrate 
-              <span className="text-amber-400 font-bold"> perfection</span>.
-            </p>
-            
-            <div className="bg-red-900/20 p-4 rounded-lg border border-red-800/50 mb-8">
-                <p className="text-red-200 font-serif italic">
-                    "You must answer all questions correctly, the first time, from start to finish. Make one mistake, and you return to the beginning."
-                </p>
+            <div className="my-6 w-full text-left bg-slate-800/50 p-4 rounded border border-slate-700">
+                <p className="text-slate-400 text-sm uppercase font-bold mb-1">Question:</p>
+                <p className="text-slate-200 mb-4 font-serif">{activeQuestion.text}</p>
+                
+                <p className="text-amber-400 text-sm uppercase font-bold mb-1">Correct Answer:</p>
+                <p className="text-white font-bold text-lg">{activeQuestion.correctAnswer}</p>
             </div>
+            
+            <p className="text-slate-300 text-sm md:text-base mb-6 leading-relaxed italic">
+              "We learn through patience and perseverance. Let us return to the West Gate and try again."
+            </p>
 
             <button 
               onClick={resetGame}
               className="
-                w-full md:w-auto px-8 py-4 
-                bg-red-700 hover:bg-red-600 active:bg-red-800
+                w-full md:w-auto px-8 py-3
+                bg-amber-700 hover:bg-amber-600 
                 text-white font-bold text-lg rounded-lg 
-                border-b-4 border-red-900 active:border-b-0 active:translate-y-1
-                transition-all uppercase tracking-widest
+                transition-all uppercase tracking-widest shadow-lg
               "
             >
-              Return to West Gate
+              Restart Level
             </button>
           </div>
         </div>
