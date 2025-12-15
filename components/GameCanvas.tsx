@@ -23,6 +23,9 @@ const GameCanvas: React.FC = () => {
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
   const [checkpointPopup, setCheckpointPopup] = useState(false);
 
+  // Player Progression State
+  const [hasApron, setHasApron] = useState(false);
+
   // Mutable Game State
   const playerRef = useRef<Player>({
     x: 50, y: 0, width: 30, height: 45, 
@@ -313,7 +316,7 @@ const GameCanvas: React.FC = () => {
     ctx.stroke();
   };
 
-  const drawPlayerSprite = (ctx: CanvasRenderingContext2D, p: Player) => {
+  const drawPlayerSprite = (ctx: CanvasRenderingContext2D, p: Player, showApron: boolean) => {
     ctx.save();
     ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
     ctx.scale(p.facing, 1); 
@@ -324,7 +327,7 @@ const GameCanvas: React.FC = () => {
     ctx.arc(0, -16, 7, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Body
+    // 2. Body (Dark Suit)
     ctx.fillStyle = '#1e293b'; 
     ctx.fillRect(-7, -10, 14, 20);
 
@@ -338,27 +341,29 @@ const GameCanvas: React.FC = () => {
     ctx.fillRect(-9, -8, 3, 14); 
     ctx.fillRect(6, -8, 3, 14);  
 
-    // 5. Apron
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-6, -2);  
-    ctx.lineTo(6, -2);   
-    ctx.lineTo(7, 8);    
-    ctx.lineTo(-7, 8);   
-    ctx.closePath();
-    ctx.fill();
+    // 5. Apron (Conditional)
+    if (showApron) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-6, -2);  
+        ctx.lineTo(6, -2);   
+        ctx.lineTo(7, 8);    
+        ctx.lineTo(-7, 8);   
+        ctx.closePath();
+        ctx.fill();
 
-    // Apron Flap
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#cbd5e1'; 
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(-6, -2);
-    ctx.lineTo(6, -2);
-    ctx.lineTo(0, 4); 
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+        // Apron Flap
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#cbd5e1'; 
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-6, -2);
+        ctx.lineTo(6, -2);
+        ctx.lineTo(0, 4); 
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
 
     // Eyes
     ctx.fillStyle = '#000000';
@@ -369,73 +374,129 @@ const GameCanvas: React.FC = () => {
     ctx.restore();
   };
 
-  const drawCastleBackground = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, width: number, height: number) => {
-    const GRID_SIZE = 400; 
-    const WALL_COLOR = '#1e293b'; // Slate 800
-    const ACCENT_COLOR = '#334155'; // Slate 700
+  const drawMasonicBackground = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, width: number, height: number) => {
+    // 1. Stars (The Clouded Canopy)
+    // Deterministic stars based on world coordinates to ensure they stay fixed while camera moves
+    const STAR_CELL = 100;
+    const startX = Math.floor(cameraX / STAR_CELL) * STAR_CELL;
+    const endX = startX + width + STAR_CELL;
+    const startY = Math.floor(cameraY / STAR_CELL) * STAR_CELL;
+    const endY = startY + height + STAR_CELL;
 
-    // Calculate visible grid range
-    const startCol = Math.floor(cameraX / GRID_SIZE);
-    const endCol = Math.floor((cameraX + width) / GRID_SIZE) + 1;
-    
-    const startRow = Math.floor(cameraY / GRID_SIZE);
-    const endRow = Math.floor((cameraY + height) / GRID_SIZE) + 1;
-
-    for (let col = startCol; col <= endCol; col++) {
-      for (let row = startRow; row <= endRow; row++) {
-        const x = col * GRID_SIZE;
-        const y = row * GRID_SIZE;
-
-        const winW = 140;
-        const winH = 220;
-        const winX = x + (GRID_SIZE - winW) / 2;
-        const winY = y + (GRID_SIZE - winH) / 2;
-
-        // Draw Window Bars (Foreground structure)
-        // Note: We DO NOT fill the window background anymore, letting the Sky Gradient show through!
-        
-        ctx.strokeStyle = '#0f172a'; // Slate 900
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        // Vertical
-        ctx.moveTo(winX + winW/2, winY);
-        ctx.lineTo(winX + winW/2, winY + winH);
-        // Horizontal
-        ctx.moveTo(winX, winY + winH*0.6);
-        ctx.lineTo(winX + winW, winY + winH*0.6);
-        ctx.stroke();
-
-        // Stone Texture (Pillars & Beams)
-        
-        // Vertical Pillar (Left of cell)
-        ctx.fillStyle = WALL_COLOR;
-        ctx.fillRect(x - 20, y, 40, GRID_SIZE);
-        
-        // Horizontal Beam (Top of cell)
-        ctx.fillRect(x, y - 20, GRID_SIZE, 40);
-
-        // Junction Block
-        ctx.fillStyle = ACCENT_COLOR;
-        ctx.fillRect(x - 25, y - 25, 50, 50);
-        ctx.strokeRect(x - 25, y - 25, 50, 50);
-
-        // Torch
-        if ((col + row) % 2 === 0) {
-            ctx.fillStyle = '#451a03'; // Wood
-            ctx.fillRect(x - 5, y + 150, 10, 30);
+    ctx.save();
+    for (let x = startX; x < endX; x += STAR_CELL) {
+        for (let y = startY; y < endY; y += STAR_CELL) {
+            // Pseudo-random hash
+            const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+            const val = n - Math.floor(n); // 0..1
             
-            // Flame
-            const flicker = Math.random() * 5;
-            ctx.fillStyle = '#f59e0b';
-            ctx.beginPath();
-            ctx.arc(x, y + 145, 8 + flicker, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath();
-            ctx.arc(x, y + 145, 4 + flicker/2, 0, Math.PI * 2);
-            ctx.fill();
+            // Draw stars only in the upper portion (relative to game world logic) or everywhere for night effect
+            if (val > 0.8) { // 20% chance of star per cell
+                const starX = x + (val * 100) % 80; // Offset inside cell
+                const starY = y + ((val * 1000) % 80);
+                const size = val * 2;
+                
+                // Twinkle
+                const time = Date.now() / 1000;
+                const alpha = 0.3 + 0.7 * Math.abs(Math.sin(time + val * 10));
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(starX, starY, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
-      }
+    }
+    ctx.restore();
+
+    // 2. Architecture Pillars & Elements
+    const GRID = 400; // Distance between features
+    const colStart = Math.floor(cameraX / GRID);
+    const colEnd = Math.floor((cameraX + width) / GRID) + 1;
+
+    for (let i = colStart; i <= colEnd; i++) {
+        const x = i * GRID;
+        
+        // ZONE 1: Preparation Room (Rough Walls) < 1000
+        if (x < 1000) {
+            // Draw faint rough stone texture in background
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.4)'; // Dark Slate
+            ctx.fillRect(x, cameraY - 1000, 20, height + 2000); // Vertical strip
+            
+            // Random-ish details
+            if (i % 2 === 0) {
+                 ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
+                 ctx.fillRect(x + 5, cameraY + (x % 500), 10, 50);
+            }
+        } 
+        // ZONE 2: The Temple (Masonic Pillars) > 1000
+        else {
+            const pillarW = 40;
+            const pillarX = x + (GRID - pillarW) / 2;
+            
+            // Pillar Shaft (Fluted look via gradient)
+            const grd = ctx.createLinearGradient(pillarX, 0, pillarX + pillarW, 0);
+            grd.addColorStop(0, '#334155');
+            grd.addColorStop(0.5, '#475569');
+            grd.addColorStop(1, '#1e293b');
+            
+            ctx.fillStyle = grd;
+            // Draw from way up to way down
+            ctx.fillRect(pillarX, cameraY - 1000, pillarW, height + 2000); 
+
+            // Fluting lines
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(pillarX + 10, cameraY - 1000, 4, height + 2000);
+            ctx.fillRect(pillarX + 26, cameraY - 1000, 4, height + 2000);
+        }
+    }
+    
+    // Tesselated Border (Horizontal band at height roughly -200)
+    // Only in Temple Zone
+    if (cameraX + width > 1000) {
+         const borderY = -200; // World Height
+         const checkSize = 40;
+         
+         const startCheck = Math.floor(Math.max(cameraX, 1000) / checkSize);
+         const endCheck = Math.floor((cameraX + width) / checkSize) + 1;
+         
+         for (let j = startCheck; j <= endCheck; j++) {
+             const cx = j * checkSize;
+             const isBlack = j % 2 === 0;
+             
+             // Top Row
+             ctx.fillStyle = isBlack ? '#000000' : '#ffffff';
+             ctx.fillRect(cx, borderY, checkSize, checkSize / 2); 
+             // Bottom Row
+             ctx.fillStyle = isBlack ? '#ffffff' : '#000000';
+             ctx.fillRect(cx, borderY + checkSize/2, checkSize, checkSize / 2);
+             
+             // Gold Rails
+             ctx.fillStyle = '#fbbf24'; 
+             ctx.fillRect(cx, borderY - 5, checkSize, 5);
+             ctx.fillRect(cx, borderY + checkSize, checkSize, 5);
+         }
+    }
+
+    // ZONE 3: The East (Glow and G)
+    if (cameraX + width > 7000) {
+         const gX = 7825; // Goal X area
+         const gY = -150; // Up in the sky
+         
+         // Ambient Light
+         const grd = ctx.createRadialGradient(gX, gY, 10, gX, gY, 400);
+         grd.addColorStop(0, 'rgba(251, 191, 36, 0.3)'); // Amber
+         grd.addColorStop(1, 'rgba(0,0,0,0)');
+         
+         ctx.fillStyle = grd;
+         ctx.fillRect(gX - 400, gY - 400, 800, 800);
+         
+         // Letter G in background
+         ctx.fillStyle = 'rgba(251, 191, 36, 0.15)';
+         ctx.font = 'bold 250px serif';
+         ctx.textAlign = 'center';
+         ctx.textBaseline = 'middle';
+         ctx.fillText('G', gX, gY);
     }
   };
 
@@ -657,10 +718,10 @@ const GameCanvas: React.FC = () => {
     // Reset any previous state for a clear slate
     ctx.resetTransform(); 
     
-    // 1. ATMOSPHERIC BACKGROUND (Vertical Gradient)
+    // 1. ATMOSPHERIC BACKGROUND (Deep Night Sky Gradient)
     const bgGradient = ctx.createLinearGradient(0, 0, 0, h);
-    bgGradient.addColorStop(0, '#020617'); // Dark Blue/Black (Night Sky)
-    bgGradient.addColorStop(1, '#1e293b'); // Slate (Horizon/Cave)
+    bgGradient.addColorStop(0, '#0f172a'); // Slate 900 (Dark Sky)
+    bgGradient.addColorStop(1, '#1e293b'); // Slate 800 (Horizon)
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, w, h);
 
@@ -672,9 +733,9 @@ const GameCanvas: React.FC = () => {
     // Apply Camera Translate (In logical coordinates)
     ctx.translate(-Math.floor(cameraRef.current.x), -Math.floor(cameraRef.current.y));
 
-    // Draw Background Layer (Castle)
+    // Draw Background Layer (Masonic Design)
     // We pass logical width/height (viewW, viewH)
-    drawCastleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
+    drawMasonicBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
 
     // Draw Checkpoints
     CHECKPOINTS.forEach(cp => {
@@ -756,8 +817,8 @@ const GameCanvas: React.FC = () => {
       }
     });
 
-    // Draw Player Sprite
-    drawPlayerSprite(ctx, player);
+    // Draw Player Sprite (With Conditional Apron)
+    drawPlayerSprite(ctx, player, hasApron);
 
     ctx.restore();
 
@@ -772,7 +833,7 @@ const GameCanvas: React.FC = () => {
     ctx.fillRect(0, 0, w, h);
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, dimensions]);
+  }, [gameState, dimensions, hasApron]);
 
   // Loop Control
   useEffect(() => {
@@ -799,6 +860,7 @@ const GameCanvas: React.FC = () => {
     setCheckpointPopup(false);
     setActiveQuestion(null); // Clear question state
     cameraRef.current = { x: 0, y: 0 };
+    setHasApron(false); // Reset Apron State
     
     // Clear Seen Lore State for a fresh "run" where you can read definitions again
     seenLoreRef.current.clear();
@@ -824,7 +886,15 @@ const GameCanvas: React.FC = () => {
   const handleCorrectAnswer = () => {
     playSound('collect');
     setScore(s => s + 100);
-    if (activeOrb) orbsStateRef.current.add(activeOrb.id);
+    
+    if (activeOrb) {
+        orbsStateRef.current.add(activeOrb.id);
+        // UNLOCK APRON if this was an Apron Orb
+        if (activeOrb.spriteKey === 'apron') {
+            setHasApron(true);
+        }
+    }
+
     setActiveOrb(null);
     setActiveQuestion(null);
 
@@ -875,7 +945,10 @@ const GameCanvas: React.FC = () => {
         <div className="px-4 py-2">
           {/* Title removed for clean UI */}
         </div>
-        <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm">
+        <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm flex items-center gap-3">
+          {hasApron && (
+             <img src={generateSpriteUrl('apron')} className="w-6 h-6 object-contain" style={{imageRendering:'pixelated'}} title="Apron Equipped"/>
+          )}
           <span className="text-cyan-400 font-mono text-xl">{score}</span>
         </div>
       </div>
