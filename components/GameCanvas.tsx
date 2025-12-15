@@ -26,6 +26,7 @@ const GameCanvas: React.FC = () => {
   // Player Identity & Leaderboard
   const [playerName, setPlayerName] = useState('');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
   // Level Completion Warnings
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
@@ -95,30 +96,63 @@ const GameCanvas: React.FC = () => {
     checkStandalone();
   }, []);
 
-  // --- Leaderboard & LocalStorage ---
+  // --- Leaderboard Fetching ---
   useEffect(() => {
-    const stored = localStorage.getItem('masonic_leaderboard');
-    if (stored) {
+    const fetchLeaderboard = async () => {
+      setIsLoadingLeaderboard(true);
       try {
-        setLeaderboard(JSON.parse(stored));
+        const res = await fetch('/api/leaderboard');
+        if (res.ok) {
+          const data = await res.json();
+          setLeaderboard(data);
+        } else {
+          throw new Error('API Error');
+        }
       } catch (e) {
-        console.error("Failed to parse leaderboard", e);
+        console.error("Failed to fetch global leaderboard, falling back to local", e);
+        const stored = localStorage.getItem('masonic_leaderboard');
+        if (stored) {
+          try {
+            setLeaderboard(JSON.parse(stored));
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      } finally {
+        setIsLoadingLeaderboard(false);
       }
-    }
+    };
+
+    fetchLeaderboard();
   }, []);
 
-  const saveScoreToLeaderboard = (finalScore: number, isComplete: boolean) => {
+  const saveScoreToLeaderboard = async (finalScore: number, isComplete: boolean) => {
     const newEntry: LeaderboardEntry = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Temporary ID for optimistic update
       name: playerName.trim() || "Unknown Brother",
       score: finalScore,
       date: Date.now(),
       completed: isComplete
     };
     
+    // 1. Optimistic UI Update
     const updated = [...leaderboard, newEntry];
     setLeaderboard(updated);
+    
+    // 2. Local Backup
     localStorage.setItem('masonic_leaderboard', JSON.stringify(updated));
+
+    // 3. Send to Global DB
+    try {
+      await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEntry)
+      });
+      // Optionally re-fetch to ensure sync, but optimistic is smoother for games
+    } catch (e) {
+      console.error("Failed to save score to global DB", e);
+    }
   };
 
   // Initialize player Y when dimensions change
@@ -1031,40 +1065,46 @@ const GameCanvas: React.FC = () => {
           <div className="flex-1 border-l-0 md:border-l border-slate-700 md:pl-8 flex flex-col min-h-[300px]">
              <h2 className="text-2xl font-bold text-slate-200 mb-4 text-center border-b border-slate-700 pb-2">The Trestleboard</h2>
              
-             <div className="grid grid-cols-2 gap-4 h-full">
-                {/* Completed Column */}
-                <div className="flex flex-col">
-                    <h3 className="text-amber-400 text-xs uppercase font-bold mb-2 text-center">Masters of the Work</h3>
-                    <div className="flex-1 bg-slate-800/50 rounded p-2 space-y-2 overflow-y-auto">
-                        {completedList.length === 0 && <p className="text-center text-slate-500 text-xs mt-4">None have passed.</p>}
-                        {completedList.map(entry => (
-                            <div key={entry.id} className="flex justify-between items-center text-xs p-2 bg-slate-800 rounded border border-amber-900/30">
-                                <span className="font-bold text-slate-200 truncate max-w-[80px]">{entry.name}</span>
-                                <span className="text-amber-500">{entry.score}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+             {isLoadingLeaderboard ? (
+               <div className="flex-1 flex items-center justify-center">
+                 <div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+               </div>
+             ) : (
+               <div className="grid grid-cols-2 gap-4 h-full">
+                  {/* Completed Column */}
+                  <div className="flex flex-col">
+                      <h3 className="text-amber-400 text-xs uppercase font-bold mb-2 text-center">Masters of the Work</h3>
+                      <div className="flex-1 bg-slate-800/50 rounded p-2 space-y-2 overflow-y-auto">
+                          {completedList.length === 0 && <p className="text-center text-slate-500 text-xs mt-4">None have passed.</p>}
+                          {completedList.map(entry => (
+                              <div key={entry.id} className="flex justify-between items-center text-xs p-2 bg-slate-800 rounded border border-amber-900/30">
+                                  <span className="font-bold text-slate-200 truncate max-w-[80px]">{entry.name}</span>
+                                  <span className="text-amber-500">{entry.score}</span>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
 
-                {/* Recent Column */}
-                <div className="flex flex-col">
-                    <h3 className="text-slate-400 text-xs uppercase font-bold mb-2 text-center">Recent Workmen</h3>
-                    <div className="flex-1 bg-slate-800/50 rounded p-2 space-y-2 overflow-y-auto">
-                        {recentList.length === 0 && <p className="text-center text-slate-500 text-xs mt-4">No records found.</p>}
-                        {recentList.map(entry => (
-                            <div key={entry.id} className="flex justify-between items-center text-xs p-2 bg-slate-800 rounded border border-slate-700">
-                                <span className="text-slate-300 truncate max-w-[70px]">{entry.name}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-slate-400 font-mono">{entry.score}</span>
-                                    <span className={`${entry.completed ? 'text-green-500' : 'text-red-400'} font-bold text-[10px] uppercase`}>
-                                        {entry.completed ? 'Pass' : 'Fail'}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-             </div>
+                  {/* Recent Column */}
+                  <div className="flex flex-col">
+                      <h3 className="text-slate-400 text-xs uppercase font-bold mb-2 text-center">Recent Workmen</h3>
+                      <div className="flex-1 bg-slate-800/50 rounded p-2 space-y-2 overflow-y-auto">
+                          {recentList.length === 0 && <p className="text-center text-slate-500 text-xs mt-4">No records found.</p>}
+                          {recentList.map(entry => (
+                              <div key={entry.id} className="flex justify-between items-center text-xs p-2 bg-slate-800 rounded border border-slate-700">
+                                  <span className="text-slate-300 truncate max-w-[70px]">{entry.name}</span>
+                                  <div className="flex items-center gap-2">
+                                      <span className="text-slate-400 font-mono">{entry.score}</span>
+                                      <span className={`${entry.completed ? 'text-green-500' : 'text-red-400'} font-bold text-[10px] uppercase`}>
+                                          {entry.completed ? 'Pass' : 'Fail'}
+                                      </span>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+               </div>
+             )}
           </div>
 
         </div>
