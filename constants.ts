@@ -27,123 +27,223 @@ export const CHECKPOINTS = [
 export const QUESTIONS: Question[] = [
   {
     id: 1,
-    text: "What is the first care of every Freemason?",
-    answers: ["To see that the Lodge is properly tyled", "To sign the attendance book", "To clothe himself properly"],
-    correctAnswer: "To see that the Lodge is properly tyled"
+    text: "What is the \"first care\" of every Freemason upon opening the Lodge?",
+    answers: [
+      "To see that the Brethren are clothed.",
+      "To pay the Tyler.",
+      "To see that the Lodge is properly tyled.",
+      "To sign the attendance book."
+    ],
+    correctAnswer: "To see that the Lodge is properly tyled."
   },
   {
     id: 2,
-    text: "How many principal Officers are there in the Lodge?",
-    answers: ["Five", "Seven", "Three"],
-    correctAnswer: "Three"
+    text: "Where is the constant place of the Senior Warden in the Lodge?",
+    answers: [
+      "The East",
+      "The South",
+      "The West",
+      "The North"
+    ],
+    correctAnswer: "The West"
   },
   {
     id: 3,
-    text: "Where is the constant place of the Junior Warden?",
-    answers: ["The South", "The West", "The East"],
-    correctAnswer: "The South"
+    text: "What are the Three Great Emblematical Lights in Freemasonry?",
+    answers: [
+      "The Sun, the Moon, and the Master of the Lodge.",
+      "Wisdom, Strength, and Beauty.",
+      "The Volume of the Sacred Law, the Square, and the Compasses.",
+      "The 24-inch Gauge, the Gavel, and the Chisel."
+    ],
+    correctAnswer: "The Volume of the Sacred Law, the Square, and the Compasses."
   },
   {
     id: 4,
-    text: "Where is the situation of the Tyler?",
-    answers: ["Within the entrance", "Outside the door of the Lodge", "At the Secretary's table"],
-    correctAnswer: "Outside the door of the Lodge"
+    text: "What does the 24-inch Gauge represent in its speculative sense?",
+    answers: [
+      "The 24 inches of the rough ashlar.",
+      "The 24 hours of the day.",
+      "The 24 ancient landmarks.",
+      "The 24 elders of Israel."
+    ],
+    correctAnswer: "The 24 hours of the day."
   },
   {
     id: 5,
-    text: "What is the duty of the Inner Guard?",
-    answers: ["To admit Freemasons on proof", "To prepare the candidate", "To collect subscriptions"],
-    correctAnswer: "To admit Freemasons on proof"
+    text: "Whom does the Junior Deacon carry messages from and to?",
+    answers: [
+      "From the Senior Warden to the Junior Warden.",
+      "From the Master to the Senior Warden.",
+      "From the Junior Warden to the Inner Guard.",
+      "From the Secretary to the Treasurer."
+    ],
+    correctAnswer: "From the Senior Warden to the Junior Warden."
   },
   {
     id: 6,
-    text: "Why is the Senior Warden placed in the West?",
-    answers: ["To mark the setting sun", "To instruct the Brethren", "To guard the entrance"],
-    correctAnswer: "To mark the setting sun"
+    text: "What are the \"Immovable Jewels\" of the Lodge?",
+    answers: [
+      "The Square, Level, and Plumb Rule.",
+      "The V.S.L., Square, and Compasses.",
+      "The Tracing Board, and the Rough and Perfect Ashlars.",
+      "The Collar, the Jewel, and the Apron."
+    ],
+    correctAnswer: "The Tracing Board, and the Rough and Perfect Ashlars."
   },
   {
     id: 7,
-    text: "Who represents the Sun to rule the day?",
-    answers: ["The Worshipful Master", "The Senior Warden", "The Chaplain"],
-    correctAnswer: "The Worshipful Master"
+    text: "Why does the Senior Warden sit in the West?",
+    answers: [
+      "To open the Lodge.",
+      "To mark the setting sun and close the Lodge.",
+      "To call the Brethren from labour to refreshment.",
+      "To admit candidates in due form."
+    ],
+    correctAnswer: "To mark the setting sun and close the Lodge."
   },
   {
     id: 8,
-    text: "What are the three great emblematical lights?",
-    answers: ["Sun, Moon, Master", "V.S.L., Square, and Compasses", "Wisdom, Strength, Beauty"],
-    correctAnswer: "V.S.L., Square, and Compasses"
+    text: "During the Rite of Destitution (Charity Charge) in the N.E. Corner, what is the candidate asked to deposit?",
+    answers: [
+      "His Signed Declaration.",
+      "A coin of the realm.",
+      "Whatever he feels disposed to give.",
+      "His metallic substances."
+    ],
+    correctAnswer: "Whatever he feels disposed to give."
   },
   {
     id: 9,
-    text: "What are the three lesser lights?",
-    answers: ["Sun, Moon, and Master", "Candles, Stars, and Sun", "Faith, Hope, and Charity"],
-    correctAnswer: "Sun, Moon, and Master"
+    text: "The \"Rough Ashlar\" represents man in his infant or primitive state. What represents the mind of man in the decline of his years?",
+    answers: [
+      "The Tracing Board.",
+      "The Perfect Ashlar.",
+      "The Smooth Ashlar.",
+      "The Cornerstone."
+    ],
+    correctAnswer: "The Perfect Ashlar."
   },
   {
     id: 10,
-    text: "What is the 24-inch Gauge used for?",
-    answers: ["To measure the work", "To smooth the stone", "To lay lines"],
-    correctAnswer: "To measure the work"
+    text: "What is the distinguishing Badge of an Entered Apprentice more ancient than?",
+    answers: [
+      "The Star and Garter.",
+      "The Golden Fleece or Roman Eagle.",
+      "The Crown and Sceptre.",
+      "The Sword and Trowel."
+    ],
+    correctAnswer: "The Golden Fleece or Roman Eagle."
   },
   {
     id: 11,
-    text: "What does the Common Gavel represent?",
-    answers: ["Force of conscience", "Authority", "Hard labour"],
-    correctAnswer: "Force of conscience"
+    text: "Which architectural order is assigned to the pillar of Wisdom?",
+    answers: [
+      "Doric",
+      "Ionic",
+      "Corinthian",
+      "Tuscan"
+    ],
+    correctAnswer: "Ionic"
   },
   {
     id: 12,
-    text: "What are the immovable jewels?",
-    answers: ["Square, Level, Plumb", "Tracing Board, Rough and Perfect Ashlars", "Collar, Apron, Gauntlets"],
-    correctAnswer: "Tracing Board, Rough and Perfect Ashlars"
+    text: "What does \"Lewis\" denote in the lecture on the Tracing Board?",
+    answers: [
+      "Wisdom.",
+      "Strength.",
+      "Beauty.",
+      "Justice."
+    ],
+    correctAnswer: "Strength."
   },
   {
     id: 13,
-    text: "What does the Rough Ashlar represent?",
-    answers: ["Man in his infant or primitive state", "The finished building", "The mind of man in old age"],
-    correctAnswer: "Man in his infant or primitive state"
+    text: "In the ancient biblical custom referred to regarding the candidate's preparation (slipshod), what did removing a shoe signify?",
+    answers: [
+      "Humility before God.",
+      "Entering holy ground.",
+      "The ratification of a bargain.",
+      "A sign of poverty."
+    ],
+    correctAnswer: "The ratification of a bargain."
   },
   {
     id: 14,
-    text: "What are the three great pillars?",
-    answers: ["Wisdom, Strength, Beauty", "Faith, Hope, Charity", "Ionic, Doric, Tuscan"],
-    correctAnswer: "Wisdom, Strength, Beauty"
+    text: "Who represents the pillar of \"Beauty\" in the building of King Solomon's Temple?",
+    answers: [
+      "King Solomon.",
+      "Hiram, King of Tyre.",
+      "Hiram Abif.",
+      "Adoniram."
+    ],
+    correctAnswer: "Hiram Abif."
   },
   {
     id: 15,
-    text: "What rests on top of Jacob's Ladder?",
-    answers: ["The Heavens", "The Blazing Star"],
-    correctAnswer: "The Heavens"
+    text: "According to the Charge after Initiation, what are the three \"distinguishing characteristics of a good Freemason\"?",
+    answers: [
+      "Faith, Hope, and Charity.",
+      "Secrecy, Fidelity, and Obedience.",
+      "Virtue, Honour, and Mercy.",
+      "Brotherly Love, Relief, and Truth."
+    ],
+    correctAnswer: "Virtue, Honour, and Mercy."
   },
   {
     id: 16,
-    text: "What do the seven stars represent?",
-    answers: ["Seven regularly made Freemasons", "Seven liberal arts", "Seven days of creation"],
-    correctAnswer: "Seven regularly made Freemasons"
+    text: "The \"Movable Jewels\" (Square, Level, Plumb Rule) are so called because:",
+    answers: [
+      "They are used by the operative mason to move stones.",
+      "They move from the Master to the Wardens during the ceremony.",
+      "They are worn by the Master and Wardens and transferable to successors.",
+      "They are carried by the Deacons during the procession."
+    ],
+    correctAnswer: "They are worn by the Master and Wardens and transferable to successors."
   },
   {
     id: 17,
-    text: "What are the ornaments of the Lodge?",
-    answers: ["Mosaic Pavement, Blazing Star, Indented Border", "The Officers", "The Candles"],
-    correctAnswer: "Mosaic Pavement, Blazing Star, Indented Border"
+    text: "What specifically rests on top of Jacob's Ladder in the Tracing Board lecture?",
+    answers: [
+      "The Volume of the Sacred Law.",
+      "A Blazing Star.",
+      "The Heavens.",
+      "The Seven Stars."
+    ],
+    correctAnswer: "The Heavens."
   },
   {
     id: 18,
-    text: "What does the Lewis denote?",
-    answers: ["Strength", "Wisdom", "Beauty"],
-    correctAnswer: "Strength"
+    text: "In the \"First Grand Offering\" which consecrated the ground of the Lodge, what did the Almighty substitute for Isaac?",
+    answers: [
+      "A Lamb.",
+      "A more agreeable victim.",
+      "A Ram caught in a thicket.",
+      "A burnt offering."
+    ],
+    correctAnswer: "A more agreeable victim."
   },
   {
     id: 19,
-    text: "What are the four cardinal virtues?",
-    answers: ["Temperance, Fortitude, Prudence, Justice", "Faith, Hope, Charity, Love", "Honour, Virtue, Mercy, Truth"],
-    correctAnswer: "Temperance, Fortitude, Prudence, Justice"
+    text: "The \"Ornaments\" of the Lodge are the Mosaic Pavement, the Blazing Star, and the Indented Border. What does the \"Indented Border\" refer to?",
+    answers: [
+      "The difference between day and night.",
+      "The bond of friendship.",
+      "The manifold blessings of nature.",
+      "The Planets in their various revolutions."
+    ],
+    correctAnswer: "The Planets in their various revolutions."
   },
   {
     id: 20,
-    text: "What are the distinguishing characteristics of a good Freemason?",
-    answers: ["Virtue, Honour, and Mercy", "Wealth, Rank, and Power", "Strength, Speed, and Agility"],
-    correctAnswer: "Virtue, Honour, and Mercy"
+    text: "When discussing the \"Secrets\" of this degree, the Worshipful Master states that the \"Grip or Token\" demands a \"Word\". How must this Word be given?",
+    answers: [
+      "At length, but only in a whisper.",
+      "Only by letter.",
+      "Never at length (except in open Lodge), but always by letters or syllables.",
+      "By halving it with a Brother."
+    ],
+    correctAnswer: "Never at length (except in open Lodge), but always by letters or syllables."
   }
 ];
 

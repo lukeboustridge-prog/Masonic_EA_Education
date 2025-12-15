@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { GameState, Player, Orb, Platform, Question } from '../types';
+import { GameState, Player, Orb, Platform, Question, LeaderboardEntry } from '../types';
 import { 
   GRAVITY, FRICTION, MOVE_SPEED, JUMP_FORCE, 
   WORLD_WIDTH, PLATFORM_DATA, ORB_DATA, GOAL_X, QUESTIONS,
@@ -17,11 +17,19 @@ const GameCanvas: React.FC = () => {
   const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
   
   // Game State
-  const [gameState, setGameState] = useState<GameState>(GameState.PLAYING);
+  const [gameState, setGameState] = useState<GameState>(GameState.START_MENU);
   const [score, setScore] = useState(0);
   const [activeOrb, setActiveOrb] = useState<Orb | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
   const [checkpointPopup, setCheckpointPopup] = useState(false);
+  
+  // Player Identity & Leaderboard
+  const [playerName, setPlayerName] = useState('');
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  // Level Completion Warnings
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  const warningTimeoutRef = useRef<number | null>(null);
 
   // Player Progression State
   const [hasApron, setHasApron] = useState(false);
@@ -87,6 +95,32 @@ const GameCanvas: React.FC = () => {
     checkStandalone();
   }, []);
 
+  // --- Leaderboard & LocalStorage ---
+  useEffect(() => {
+    const stored = localStorage.getItem('masonic_leaderboard');
+    if (stored) {
+      try {
+        setLeaderboard(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to parse leaderboard", e);
+      }
+    }
+  }, []);
+
+  const saveScoreToLeaderboard = (finalScore: number, isComplete: boolean) => {
+    const newEntry: LeaderboardEntry = {
+      id: Date.now().toString(),
+      name: playerName.trim() || "Unknown Brother",
+      score: finalScore,
+      date: Date.now(),
+      completed: isComplete
+    };
+    
+    const updated = [...leaderboard, newEntry];
+    setLeaderboard(updated);
+    localStorage.setItem('masonic_leaderboard', JSON.stringify(updated));
+  };
+
   // Initialize player Y when dimensions change
   useEffect(() => {
     // Reset player if init
@@ -107,6 +141,9 @@ const GameCanvas: React.FC = () => {
     // Ensure Apron is loaded if not explicitly in ORB_DATA (it is, but safe to keep logic)
     if (!uniqueKeys.includes('apron')) uniqueKeys.push('apron');
     
+    // Add Pillars
+    uniqueKeys.push('pillar_ionic', 'pillar_doric', 'pillar_corinthian');
+
     uniqueKeys.forEach(key => {
         const img = new Image();
         // Generate sprite on the fly
@@ -210,7 +247,6 @@ const GameCanvas: React.FC = () => {
         if (request) {
             request.call(docEl).catch((e: any) => console.log("Fullscreen request failed", e));
         } else {
-            // Fallback for systems that fail silently or don't support API in this context
             console.log("Fullscreen API not available");
         }
       } else {
@@ -269,110 +305,54 @@ const GameCanvas: React.FC = () => {
 
   // --- DRAWING HELPERS ---
 
-  // Procedural Stone Texture Generator
+  // Mosaic Pavement Texture Generator
   const drawStoneBlock = (
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
     w: number,
     h: number,
-    color: string,
-    isRough: boolean
+    color: string
   ) => {
-    // 1. Base Fill
-    ctx.fillStyle = color;
+    // 1. Draw Side/Body (Marble)
+    ctx.fillStyle = '#cbd5e1'; // Light grey marble base
     ctx.fillRect(x, y, w, h);
-
+    
+    // Marble veining
     ctx.save();
-    // Clip to ensure pattern stays inside
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
-
-    // 2. Brick Pattern
-    const brickH = 20;
-    const brickW = 40;
-    
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; // Subtle Mortar
+    ctx.strokeStyle = '#94a3b8';
     ctx.lineWidth = 1;
-
-    // Iterate rows
-    const startRow = Math.floor(y / brickH);
-    const endRow = Math.floor((y + h) / brickH) + 1;
-
-    for (let row = startRow; row < endRow; row++) {
-        const rowY = row * brickH;
-        
-        // Horizontal Line (Mortar)
+    ctx.globalAlpha = 0.3;
+    for(let i=0; i<w; i+=15) {
         ctx.beginPath();
-        ctx.moveTo(x, rowY);
-        ctx.lineTo(x + w, rowY);
+        ctx.moveTo(x + i, y);
+        ctx.lineTo(x + i - 20, y + h);
         ctx.stroke();
-
-        // Vertical Lines (Bricks)
-        // Offset logic
-        let offset = 0;
-        if (isRough) {
-            // Deterministic chaos based on row index for Rough Ashlar
-            offset = Math.abs(Math.sin(row * 432.1)) * brickW; 
-        } else {
-            // Perfect running bond for Perfect Ashlar
-            offset = (row % 2 === 0) ? 0 : (brickW / 2);
-        }
-
-        const startCol = Math.floor((x - offset) / brickW);
-        const endCol = Math.floor((x + w - offset) / brickW) + 1;
-
-        for (let col = startCol; col < endCol; col++) {
-            let brickX = col * brickW + offset;
-            
-            // Jitter brick position for rough look
-            if (isRough) {
-                brickX += Math.sin(row * col * 12.3) * 5;
-            }
-
-            if (brickX > x && brickX < x + w) {
-                ctx.beginPath();
-                ctx.moveTo(brickX, rowY);
-                ctx.lineTo(brickX, rowY + brickH);
-                ctx.stroke();
-            }
-        }
     }
+    ctx.restore();
 
-    // 3. Noise / Texture Overlay
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    // Simple noise pattern (prime steps to avoid repeating)
-    for (let nx = x; nx < x + w; nx += 13) {
-        for (let ny = y; ny < y + h; ny += 17) {
-            if (Math.sin(nx * ny) > 0.5) {
-                ctx.fillRect(nx, ny, 2, 2);
-            }
-        }
-    }
-
-    ctx.restore(); // Remove clip
-
-    // 4. 3D Bevel (Highlight & Shadow)
-    const bevelSize = 4;
+    // 2. Mosaic Pavement Top (Checkered)
+    const TILE_SIZE = 15;
+    const cols = Math.ceil(w / TILE_SIZE);
+    const rows = 1; // Only top surface
     
-    // Top & Left (Highlight)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; 
-    ctx.lineWidth = bevelSize;
-    ctx.beginPath();
-    ctx.moveTo(x + w, y);
-    ctx.lineTo(x, y);
-    ctx.lineTo(x, y + h);
-    ctx.stroke();
-
-    // Bottom & Right (Shadow)
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.lineWidth = bevelSize;
-    ctx.beginPath();
-    ctx.moveTo(x, y + h);
-    ctx.lineTo(x + w, y + h);
-    ctx.lineTo(x + w, y);
-    ctx.stroke();
+    for(let c=0; c<cols; c++) {
+        const tx = x + c * TILE_SIZE;
+        // Don't draw past width
+        const tw = Math.min(TILE_SIZE, x + w - tx);
+        
+        // Checkered pattern
+        ctx.fillStyle = (c % 2 === 0) ? '#1e293b' : '#f8fafc'; // Dark Slate vs White
+        ctx.fillRect(tx, y, tw, TILE_SIZE);
+    }
+    
+    // Border for definition
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
   };
 
   const drawPlayerSprite = (ctx: CanvasRenderingContext2D, p: Player, showApron: boolean) => {
@@ -433,130 +413,102 @@ const GameCanvas: React.FC = () => {
     ctx.restore();
   };
 
-  const drawMasonicBackground = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, width: number, height: number) => {
-    // 1. Stars (The Clouded Canopy)
-    // Deterministic stars based on world coordinates to ensure they stay fixed while camera moves
-    const STAR_CELL = 100;
+  const drawTempleBackground = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, width: number, height: number) => {
+    // 1. The Ceiling (Architrave/Cornice) & Starry Deck
+    ctx.save();
+    
+    // Deep Blue Sky Background (The Starry Deck)
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
+    skyGrad.addColorStop(0, '#0f172a'); // Night Sky
+    skyGrad.addColorStop(1, '#1e293b'); // Horizon
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(cameraX, cameraY, width, height);
+
+    // Stars
+    const STAR_CELL = 200;
     const startX = Math.floor(cameraX / STAR_CELL) * STAR_CELL;
     const endX = startX + width + STAR_CELL;
     const startY = Math.floor(cameraY / STAR_CELL) * STAR_CELL;
     const endY = startY + height + STAR_CELL;
 
-    ctx.save();
     for (let x = startX; x < endX; x += STAR_CELL) {
         for (let y = startY; y < endY; y += STAR_CELL) {
-            // Pseudo-random hash
             const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-            const val = n - Math.floor(n); // 0..1
-            
-            // Draw stars only in the upper portion (relative to game world logic) or everywhere for night effect
-            if (val > 0.8) { // 20% chance of star per cell
-                const starX = x + (val * 100) % 80; // Offset inside cell
-                const starY = y + ((val * 1000) % 80);
-                const size = val * 2;
-                
-                // Twinkle
-                const time = Date.now() / 1000;
-                const alpha = 0.3 + 0.7 * Math.abs(Math.sin(time + val * 10));
-
+            const val = n - Math.floor(n); 
+            if (val > 0.7) { 
+                const starX = x + (val * 100) % 150; 
+                const starY = y + ((val * 1000) % 150);
+                const size = val * 1.5;
+                const alpha = 0.3 + 0.7 * Math.abs(Math.sin(Date.now() / 1500 + val * 10));
                 ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                ctx.beginPath();
-                ctx.arc(starX, starY, size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(starX, starY, size, 0, Math.PI * 2); ctx.fill();
             }
         }
     }
-    ctx.restore();
 
-    // 2. Architecture Pillars & Elements
-    const GRID = 400; // Distance between features
-    const colStart = Math.floor(cameraX / GRID);
-    const colEnd = Math.floor((cameraX + width) / GRID) + 1;
+    // 2. The Pillars (Background Layer)
+    const PILLAR_GAP = 400;
+    const pStart = Math.floor(cameraX / PILLAR_GAP);
+    const pEnd = Math.floor((cameraX + width) / PILLAR_GAP) + 1;
+    const ceilingHeight = 60; // Height of cornice
 
-    for (let i = colStart; i <= colEnd; i++) {
-        const x = i * GRID;
+    for (let i = pStart; i <= pEnd; i++) {
+        const px = i * PILLAR_GAP;
         
-        // ZONE 1: Preparation Room (Rough Walls) < 1000
-        if (x < 1000) {
-            // Draw faint rough stone texture in background
-            ctx.fillStyle = 'rgba(30, 41, 59, 0.4)'; // Dark Slate
-            ctx.fillRect(x, cameraY - 1000, 20, height + 2000); // Vertical strip
-            
-            // Random-ish details
-            if (i % 2 === 0) {
-                 ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
-                 ctx.fillRect(x + 5, cameraY + (x % 500), 10, 50);
-            }
-        } 
-        // ZONE 2: The Temple (Masonic Pillars) > 1000
-        else {
-            const pillarW = 40;
-            const pillarX = x + (GRID - pillarW) / 2;
-            
-            // Pillar Shaft (Fluted look via gradient)
-            const grd = ctx.createLinearGradient(pillarX, 0, pillarX + pillarW, 0);
-            grd.addColorStop(0, '#334155');
-            grd.addColorStop(0.5, '#475569');
-            grd.addColorStop(1, '#1e293b');
-            
-            ctx.fillStyle = grd;
-            // Draw from way up to way down
-            ctx.fillRect(pillarX, cameraY - 1000, pillarW, height + 2000); 
+        // Determine Pillar Type based on Progression (Masonic Orders)
+        let pillarKey = '';
+        if (px < 2000) {
+            pillarKey = 'pillar_ionic'; // Start: Wisdom (Master/East technically, but used as sequence here)
+        } else if (px < 5000) {
+            pillarKey = 'pillar_doric'; // Middle: Strength
+        } else {
+            pillarKey = 'pillar_corinthian'; // End: Beauty
+        }
 
-            // Fluting lines
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.fillRect(pillarX + 10, cameraY - 1000, 4, height + 2000);
-            ctx.fillRect(pillarX + 26, cameraY - 1000, 4, height + 2000);
+        const img = spritesRef.current[pillarKey];
+        if (img) {
+            // Draw tall pillar stretching from floor to ceiling
+            const pWidth = 60;
+            const pX = px - pWidth/2;
+            
+            ctx.globalAlpha = 0.8; // Slightly faded for background
+            // Better: Draw in world space
+            ctx.drawImage(img, pX, -200, pWidth, DESIGN_HEIGHT + 400);
+            ctx.globalAlpha = 1.0;
         }
     }
-    
-    // Tesselated Border (Horizontal band at height roughly -200)
-    // Only in Temple Zone
-    if (cameraX + width > 1000) {
-         const borderY = -200; // World Height
-         const checkSize = 40;
-         
-         const startCheck = Math.floor(Math.max(cameraX, 1000) / checkSize);
-         const endCheck = Math.floor((cameraX + width) / checkSize) + 1;
-         
-         for (let j = startCheck; j <= endCheck; j++) {
-             const cx = j * checkSize;
-             const isBlack = j % 2 === 0;
-             
-             // Top Row
-             ctx.fillStyle = isBlack ? '#000000' : '#ffffff';
-             ctx.fillRect(cx, borderY, checkSize, checkSize / 2); 
-             // Bottom Row
-             ctx.fillStyle = isBlack ? '#ffffff' : '#000000';
-             ctx.fillRect(cx, borderY + checkSize/2, checkSize, checkSize / 2);
-             
-             // Gold Rails
-             ctx.fillStyle = '#fbbf24'; 
-             ctx.fillRect(cx, borderY - 5, checkSize, 5);
-             ctx.fillRect(cx, borderY + checkSize, checkSize, 5);
-         }
+
+    // 3. The Ceiling Cornice (Architrave) - Fixed Top
+    // We draw this in World Space Y=0 to Y=60 roughly
+    if (cameraY < 100) { // Only visible if we look up
+        const cY = 0;
+        const cH = 60;
+        
+        // Main Stone Block
+        ctx.fillStyle = '#1e293b'; // Dark Stone
+        ctx.fillRect(cameraX, cY, width, cH);
+        
+        // Detail Lines
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cameraX, cY + 10); ctx.lineTo(cameraX + width, cY + 10);
+        ctx.moveTo(cameraX, cY + 50); ctx.lineTo(cameraX + width, cY + 50);
+        ctx.stroke();
+        
+        // Dentils (Small blocks)
+        ctx.fillStyle = '#475569';
+        const dentilSize = 20;
+        const dStart = Math.floor(cameraX / dentilSize);
+        const dEnd = Math.floor((cameraX + width) / dentilSize) + 1;
+        for(let i=dStart; i<=dEnd; i++) {
+            if (i%2 === 0) {
+                ctx.fillRect(i*dentilSize, cY + 30, dentilSize, 10);
+            }
+        }
     }
 
-    // ZONE 3: The East (Glow and G)
-    if (cameraX + width > 7000) {
-         const gX = 7825; // Goal X area
-         const gY = -150; // Up in the sky
-         
-         // Ambient Light
-         const grd = ctx.createRadialGradient(gX, gY, 10, gX, gY, 400);
-         grd.addColorStop(0, 'rgba(251, 191, 36, 0.3)'); // Amber
-         grd.addColorStop(1, 'rgba(0,0,0,0)');
-         
-         ctx.fillStyle = grd;
-         ctx.fillRect(gX - 400, gY - 400, 800, 800);
-         
-         // Letter G in background
-         ctx.fillStyle = 'rgba(251, 191, 36, 0.15)';
-         ctx.font = 'bold 250px serif';
-         ctx.textAlign = 'center';
-         ctx.textBaseline = 'middle';
-         ctx.fillText('G', gX, gY);
-    }
+    ctx.restore();
   };
 
   // --- Main Loop ---
@@ -712,11 +664,33 @@ const GameCanvas: React.FC = () => {
         }
     }
 
-    // Goal Collision
+    // Goal Collision & Level Completion Check
     if (player.x + player.width > GOAL_X) {
-      setGameState(GameState.VICTORY);
-      playSound('win');
-      return; 
+      const maxScore = ORB_DATA.length * 100;
+      
+      if (score >= maxScore) {
+        setGameState(GameState.VICTORY);
+        saveScoreToLeaderboard(score + 500, true); // Bonus 500 for finishing
+        playSound('win');
+        return; 
+      } else {
+         // Push player back
+         player.x = GOAL_X - player.width - 5;
+         player.vx = 0;
+         
+         // Trigger Warning
+         if (!warningMessage) {
+            const missing = maxScore - score;
+            const msg = `Access Denied. Need ${missing} more points.`;
+            setWarningMessage(msg);
+            playSound('error');
+            
+            if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+            warningTimeoutRef.current = window.setTimeout(() => {
+                setWarningMessage(null);
+            }, 3000);
+         }
+      }
     }
 
     // Orb Collision (Working Tools)
@@ -783,12 +757,8 @@ const GameCanvas: React.FC = () => {
     // Reset any previous state for a clear slate
     ctx.resetTransform(); 
     
-    // 1. ATMOSPHERIC BACKGROUND (Deep Night Sky Gradient)
-    const bgGradient = ctx.createLinearGradient(0, 0, 0, h);
-    bgGradient.addColorStop(0, '#0f172a'); // Slate 900 (Dark Sky)
-    bgGradient.addColorStop(1, '#1e293b'); // Slate 800 (Horizon)
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, w, h);
+    // 1. CLEAR AND PREP
+    ctx.clearRect(0,0,w,h);
 
     ctx.save();
     
@@ -798,9 +768,8 @@ const GameCanvas: React.FC = () => {
     // Apply Camera Translate (In logical coordinates)
     ctx.translate(-Math.floor(cameraRef.current.x), -Math.floor(cameraRef.current.y));
 
-    // Draw Background Layer (Masonic Design)
-    // We pass logical width/height (viewW, viewH)
-    drawMasonicBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
+    // Draw Background Layer (Temple Interior)
+    drawTempleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
 
     // Draw Checkpoints
     CHECKPOINTS.forEach(cp => {
@@ -832,16 +801,16 @@ const GameCanvas: React.FC = () => {
         }
     });
 
-    // Draw Platforms (Updated with Procedural Stone)
+    // Draw Platforms (Updated with Mosaic Pavement)
     platforms.forEach(plat => {
-      // Determine roughness based on progression
-      // < 4500 is "Starting/Rough", > 4500 approaches "Perfect"
-      const isRough = plat.x < 4500;
-      drawStoneBlock(ctx, plat.x, plat.y, plat.width, plat.height, plat.color, isRough);
+      drawStoneBlock(ctx, plat.x, plat.y, plat.width, plat.height, plat.color);
     });
 
     // Draw Goal (The East)
-    ctx.fillStyle = '#fbbf24';
+    const maxScore = ORB_DATA.length * 100;
+    const isGoalUnlocked = score >= maxScore;
+    
+    ctx.fillStyle = isGoalUnlocked ? '#fbbf24' : '#ef4444'; // Gold if unlocked, Red if locked
     ctx.globalAlpha = 0.8;
     ctx.fillRect(GOAL_X, groundRefY - 150, 50, 150);
     ctx.beginPath();
@@ -898,7 +867,7 @@ const GameCanvas: React.FC = () => {
     ctx.fillRect(0, 0, w, h);
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, dimensions, hasApron]);
+  }, [gameState, dimensions, hasApron, warningMessage, score, leaderboard, playerName]); 
 
   // Loop Control
   useEffect(() => {
@@ -908,7 +877,7 @@ const GameCanvas: React.FC = () => {
     return () => cancelAnimationFrame(animationFrameRef.current);
   }, [gameState, gameLoop]);
 
-  const resetGame = () => {
+  const resetGame = (goToMenu: boolean = false) => {
     playerRef.current = { 
         x: 50, y: DESIGN_HEIGHT - 100, width: 30, height: 45, 
         vx: 0, vy: 0, 
@@ -923,6 +892,11 @@ const GameCanvas: React.FC = () => {
     setScore(0);
     lastCheckpointRef.current = { x: 50, y: DESIGN_HEIGHT - 100 }; // Reset checkpoint to start
     setCheckpointPopup(false);
+    
+    // Clear warnings
+    setWarningMessage(null);
+    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+    
     setActiveQuestion(null); // Clear question state
     cameraRef.current = { x: 0, y: 0 };
     setHasApron(false); // Reset Apron State
@@ -930,7 +904,7 @@ const GameCanvas: React.FC = () => {
     // Clear Seen Lore State for a fresh "run" where you can read definitions again
     seenLoreRef.current.clear();
     
-    setGameState(GameState.PLAYING);
+    setGameState(goToMenu ? GameState.START_MENU : GameState.PLAYING);
   };
 
   // Lore Handler
@@ -978,6 +952,8 @@ const GameCanvas: React.FC = () => {
 
   const handleIncorrectAnswer = () => {
     playSound('error');
+    // Save current progress on failure
+    saveScoreToLeaderboard(score, false);
     setGameState(GameState.GAME_OVER);
   };
 
@@ -1003,6 +979,99 @@ const GameCanvas: React.FC = () => {
     }
   };
 
+  const startGame = () => {
+    if (playerName.trim().length > 0) {
+      setGameState(GameState.PLAYING);
+    }
+  };
+
+  // Render Start Screen
+  if (gameState === GameState.START_MENU) {
+    const completedList = leaderboard
+        .filter(e => e.completed)
+        .sort((a,b) => b.score - a.score || b.date - a.date)
+        .slice(0, 5);
+        
+    const recentList = [...leaderboard]
+        .sort((a,b) => b.date - a.date)
+        .slice(0, 5);
+
+    return (
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 bg-[url('https://www.transparenttextures.com/patterns/dark-leather.png')] overflow-hidden p-4">
+        <div className="max-w-4xl w-full flex flex-col md:flex-row gap-8 bg-slate-900/80 backdrop-blur-md p-6 md:p-8 rounded-xl border-2 border-amber-600 shadow-2xl">
+          
+          {/* Left: Login & Intro */}
+          <div className="flex-1 flex flex-col items-center text-center space-y-6">
+             <div>
+                <img src={generateSpriteUrl('square_compass')} className="w-20 h-20 mx-auto mb-4" style={{imageRendering:'pixelated'}}/>
+                <h1 className="text-3xl md:text-4xl font-bold text-amber-500 font-serif tracking-widest uppercase">The Entered Apprentice Challenge</h1>
+                <p className="text-slate-400 mt-2 italic">A Journey to Master the First Degree</p>
+             </div>
+             
+             <div className="w-full max-w-xs space-y-4">
+                <input 
+                  type="text" 
+                  placeholder="Enter Your Name" 
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="w-full px-4 py-3 rounded bg-slate-800 border border-slate-600 focus:border-amber-500 focus:outline-none text-white text-center font-bold"
+                  maxLength={15}
+                />
+                <button 
+                  onClick={startGame}
+                  disabled={!playerName.trim()}
+                  className="w-full py-3 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded transition-colors uppercase tracking-widest shadow-lg"
+                >
+                  Begin Journey
+                </button>
+             </div>
+          </div>
+
+          {/* Right: Leaderboard */}
+          <div className="flex-1 border-l-0 md:border-l border-slate-700 md:pl-8 flex flex-col min-h-[300px]">
+             <h2 className="text-2xl font-bold text-slate-200 mb-4 text-center border-b border-slate-700 pb-2">The Trestleboard</h2>
+             
+             <div className="grid grid-cols-2 gap-4 h-full">
+                {/* Completed Column */}
+                <div className="flex flex-col">
+                    <h3 className="text-amber-400 text-xs uppercase font-bold mb-2 text-center">Masters of the Work</h3>
+                    <div className="flex-1 bg-slate-800/50 rounded p-2 space-y-2 overflow-y-auto">
+                        {completedList.length === 0 && <p className="text-center text-slate-500 text-xs mt-4">None have passed.</p>}
+                        {completedList.map(entry => (
+                            <div key={entry.id} className="flex justify-between items-center text-xs p-2 bg-slate-800 rounded border border-amber-900/30">
+                                <span className="font-bold text-slate-200 truncate max-w-[80px]">{entry.name}</span>
+                                <span className="text-amber-500">{entry.score}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Recent Column */}
+                <div className="flex flex-col">
+                    <h3 className="text-slate-400 text-xs uppercase font-bold mb-2 text-center">Recent Workmen</h3>
+                    <div className="flex-1 bg-slate-800/50 rounded p-2 space-y-2 overflow-y-auto">
+                        {recentList.length === 0 && <p className="text-center text-slate-500 text-xs mt-4">No records found.</p>}
+                        {recentList.map(entry => (
+                            <div key={entry.id} className="flex justify-between items-center text-xs p-2 bg-slate-800 rounded border border-slate-700">
+                                <span className="text-slate-300 truncate max-w-[70px]">{entry.name}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-slate-400 font-mono">{entry.score}</span>
+                                    <span className={`${entry.completed ? 'text-green-500' : 'text-red-400'} font-bold text-[10px] uppercase`}>
+                                        {entry.completed ? 'Pass' : 'Fail'}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+             </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-full overflow-hidden no-select">
       
@@ -1025,7 +1094,7 @@ const GameCanvas: React.FC = () => {
               title="Toggle Fullscreen"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
             </button>
           )}
@@ -1034,7 +1103,10 @@ const GameCanvas: React.FC = () => {
           {hasApron && (
              <img src={generateSpriteUrl('apron')} className="w-6 h-6 object-contain" style={{imageRendering:'pixelated'}} title="Apron Equipped"/>
           )}
-          <span className="text-cyan-400 font-mono text-xl">{score}</span>
+          <div className="flex flex-col items-end leading-none">
+              <span className="text-cyan-400 font-mono text-xl">{score}</span>
+              <span className="text-slate-500 font-mono text-xs">/ {ORB_DATA.length * 100}</span>
+          </div>
         </div>
       </div>
 
@@ -1049,6 +1121,17 @@ const GameCanvas: React.FC = () => {
            <div>
              <h3 className="text-amber-400 font-bold text-lg md:text-xl uppercase tracking-widest">Checkpoint</h3>
              <p className="text-slate-400 text-xs md:text-sm">Progress Saved</p>
+           </div>
+        </div>
+      </div>
+
+      {/* Warning Notification */}
+      <div className={`absolute top-32 left-1/2 transform -translate-x-1/2 z-30 pointer-events-none transition-all duration-300 ${warningMessage ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+        <div className="bg-red-900/90 border-2 border-red-500 px-6 py-3 rounded-xl flex items-center gap-4 shadow-[0_0_20px_rgba(220,38,38,0.3)] backdrop-blur-md">
+           <div className="text-2xl">⚠️</div>
+           <div>
+             <h3 className="text-red-400 font-bold text-lg uppercase tracking-widest">Access Denied</h3>
+             <p className="text-slate-300 text-sm">{warningMessage}</p>
            </div>
         </div>
       </div>
@@ -1145,19 +1228,32 @@ const GameCanvas: React.FC = () => {
               "We learn through patience and perseverance. Let us return to the West Gate and try again."
             </p>
 
-            <button 
-              onClick={resetGame}
-              className="
-                shrink-0
-                w-full md:w-auto px-6 py-3 md:px-8
-                bg-amber-700 hover:bg-amber-600 
-                text-white font-bold text-base md:text-lg rounded-lg 
-                transition-all uppercase tracking-widest shadow-lg
-                mb-2 md:mb-0
-              "
-            >
-              Restart Level
-            </button>
+            <div className="flex gap-4">
+                <button 
+                  onClick={() => resetGame(false)}
+                  className="
+                    shrink-0
+                    px-6 py-3 md:px-8
+                    bg-amber-700 hover:bg-amber-600 
+                    text-white font-bold text-base md:text-lg rounded-lg 
+                    transition-all uppercase tracking-widest shadow-lg
+                  "
+                >
+                  Restart Level
+                </button>
+                <button 
+                  onClick={() => resetGame(true)}
+                  className="
+                    shrink-0
+                    px-6 py-3 md:px-8
+                    bg-slate-700 hover:bg-slate-600 
+                    text-white font-bold text-base md:text-lg rounded-lg 
+                    transition-all uppercase tracking-widest shadow-lg
+                  "
+                >
+                  Main Menu
+                </button>
+            </div>
           </div>
         </div>
       )}
@@ -1173,13 +1269,22 @@ const GameCanvas: React.FC = () => {
               <br/>
               <span className="font-bold text-white mt-2 block">Proceed to Fellowcraft</span>
             </p>
-            <p className="text-blue-300 text-xl mb-8 font-mono">Final Score: {score}</p>
-            <button 
-              onClick={resetGame}
-              className="px-10 py-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-full transition transform hover:scale-105 shadow-xl shadow-amber-900/50"
-            >
-              Restart Journey
-            </button>
+            <p className="text-blue-300 text-xl mb-8 font-mono">Final Score: {score + 500}</p>
+            
+            <div className="flex justify-center gap-4">
+                <button 
+                  onClick={() => resetGame(false)}
+                  className="px-8 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-full transition transform hover:scale-105 shadow-xl shadow-amber-900/50"
+                >
+                  Restart Journey
+                </button>
+                <button 
+                  onClick={() => resetGame(true)}
+                  className="px-8 py-3 bg-slate-600 hover:bg-slate-500 text-white font-bold rounded-full transition transform hover:scale-105 shadow-xl"
+                >
+                  View Leaderboard
+                </button>
+            </div>
           </div>
         </div>
       )}
