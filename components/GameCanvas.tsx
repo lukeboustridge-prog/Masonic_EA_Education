@@ -179,39 +179,47 @@ const GameCanvas: React.FC = () => {
     }
   };
 
-  // Helper to trigger fullscreen
+  // Helper to trigger fullscreen with vendor prefixes
   const enterFullscreen = () => {
     if (hasTriedFullscreenRef.current) return;
     hasTriedFullscreenRef.current = true;
 
     try {
-      const docEl = document.documentElement;
-      if (docEl.requestFullscreen) {
-        docEl.requestFullscreen().catch(() => {
+      const docEl = document.documentElement as any;
+      const request = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+      if (request) {
+        request.call(docEl).catch(() => {
           // Silent fail for browsers that don't support or deny it
         });
-      } else if ((docEl as any).webkitRequestFullscreen) {
-        // Fallback for older Safari/Chrome webview implementations
-        (docEl as any).webkitRequestFullscreen();
       }
     } catch (e) {
-      // Ignore errors (iOS Safari throws here often)
+      // Ignore errors 
     }
   };
 
+  // Toggle Function with comprehensive prefix support and iOS Alert Fallback
   const toggleFullscreen = () => {
     try {
-      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
-        const docEl = document.documentElement as any;
-        const request = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
-        if (request) request.call(docEl).catch((e: any) => console.log(e));
+      const doc = document as any;
+      const docEl = document.documentElement as any;
+      
+      const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+      
+      if (!isFullscreen) {
+        const request = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        if (request) {
+            request.call(docEl).catch((e: any) => console.log("Fullscreen request failed", e));
+        } else {
+             // Fallback for iOS Safari which doesn't support the Fullscreen API in the browser
+             alert("To enable Fullscreen on iOS:\n\n1. Tap the Share button (bottom center)\n2. Select 'Add to Home Screen'");
+        }
       } else {
-        const exit = document.exitFullscreen || (document as any).webkitExitFullscreen;
-        if (exit) exit.call(document).catch((e: any) => console.log(e));
+        const exit = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+        if (exit) exit.call(doc).catch((e: any) => console.log("Fullscreen exit failed", e));
       }
     } catch (e) {
-      // iOS Safari usually doesn't support this API
-      console.log('Fullscreen API not supported');
+      console.log('Fullscreen API error', e);
+      alert("Fullscreen not supported on this device.");
     }
   };
 
