@@ -30,7 +30,6 @@ export const QUESTIONS: Question[] = [
     text: "What is the \"first care\" of every Freemason upon opening the Lodge?",
     answers: [
       "To see that the Brethren are clothed.",
-      "To pay the Tyler.",
       "To see that the Lodge is properly tyled.",
       "To sign the attendance book."
     ],
@@ -42,8 +41,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "The East",
       "The South",
-      "The West",
-      "The North"
+      "The West"
     ],
     correctAnswer: "The West"
   },
@@ -53,8 +51,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "The Sun, the Moon, and the Master of the Lodge.",
       "Wisdom, Strength, and Beauty.",
-      "The Volume of the Sacred Law, the Square, and the Compasses.",
-      "The 24-inch Gauge, the Gavel, and the Chisel."
+      "The Volume of the Sacred Law, the Square, and the Compasses."
     ],
     correctAnswer: "The Volume of the Sacred Law, the Square, and the Compasses."
   },
@@ -62,7 +59,6 @@ export const QUESTIONS: Question[] = [
     id: 4,
     text: "What does the 24-inch Gauge represent in its speculative sense?",
     answers: [
-      "The 24 inches of the rough ashlar.",
       "The 24 hours of the day.",
       "The 24 ancient landmarks.",
       "The 24 elders of Israel."
@@ -75,7 +71,6 @@ export const QUESTIONS: Question[] = [
     answers: [
       "From the Senior Warden to the Junior Warden.",
       "From the Master to the Senior Warden.",
-      "From the Junior Warden to the Inner Guard.",
       "From the Secretary to the Treasurer."
     ],
     correctAnswer: "From the Senior Warden to the Junior Warden."
@@ -86,8 +81,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "The Square, Level, and Plumb Rule.",
       "The V.S.L., Square, and Compasses.",
-      "The Tracing Board, and the Rough and Perfect Ashlars.",
-      "The Collar, the Jewel, and the Apron."
+      "The Tracing Board, and the Rough and Perfect Ashlars."
     ],
     correctAnswer: "The Tracing Board, and the Rough and Perfect Ashlars."
   },
@@ -97,8 +91,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "To open the Lodge.",
       "To mark the setting sun and close the Lodge.",
-      "To call the Brethren from labour to refreshment.",
-      "To admit candidates in due form."
+      "To call the Brethren from labour to refreshment."
     ],
     correctAnswer: "To mark the setting sun and close the Lodge."
   },
@@ -106,7 +99,6 @@ export const QUESTIONS: Question[] = [
     id: 8,
     text: "During the Rite of Destitution (Charity Charge) in the N.E. Corner, what is the candidate asked to deposit?",
     answers: [
-      "His Signed Declaration.",
       "A coin of the realm.",
       "Whatever he feels disposed to give.",
       "His metallic substances."
@@ -117,7 +109,6 @@ export const QUESTIONS: Question[] = [
     id: 9,
     text: "The \"Rough Ashlar\" represents man in his infant or primitive state. What represents the mind of man in the decline of his years?",
     answers: [
-      "The Tracing Board.",
       "The Perfect Ashlar.",
       "The Smooth Ashlar.",
       "The Cornerstone."
@@ -130,7 +121,6 @@ export const QUESTIONS: Question[] = [
     answers: [
       "The Star and Garter.",
       "The Golden Fleece or Roman Eagle.",
-      "The Crown and Sceptre.",
       "The Sword and Trowel."
     ],
     correctAnswer: "The Golden Fleece or Roman Eagle."
@@ -141,8 +131,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "Doric",
       "Ionic",
-      "Corinthian",
-      "Tuscan"
+      "Corinthian"
     ],
     correctAnswer: "Ionic"
   },
@@ -152,8 +141,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "Wisdom.",
       "Strength.",
-      "Beauty.",
-      "Justice."
+      "Beauty."
     ],
     correctAnswer: "Strength."
   },
@@ -163,8 +151,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "Humility before God.",
       "Entering holy ground.",
-      "The ratification of a bargain.",
-      "A sign of poverty."
+      "The ratification of a bargain."
     ],
     correctAnswer: "The ratification of a bargain."
   },
@@ -174,8 +161,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "King Solomon.",
       "Hiram, King of Tyre.",
-      "Hiram Abif.",
-      "Adoniram."
+      "Hiram Abif."
     ],
     correctAnswer: "Hiram Abif."
   },
@@ -185,8 +171,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "Faith, Hope, and Charity.",
       "Secrecy, Fidelity, and Obedience.",
-      "Virtue, Honour, and Mercy.",
-      "Brotherly Love, Relief, and Truth."
+      "Virtue, Honour, and Mercy."
     ],
     correctAnswer: "Virtue, Honour, and Mercy."
   },
@@ -195,7 +180,6 @@ export const QUESTIONS: Question[] = [
     text: "The \"Movable Jewels\" (Square, Level, Plumb Rule) are so called because:",
     answers: [
       "They are used by the operative mason to move stones.",
-      "They move from the Master to the Wardens during the ceremony.",
       "They are worn by the Master and Wardens and transferable to successors.",
       "They are carried by the Deacons during the procession."
     ],
@@ -207,8 +191,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "The Volume of the Sacred Law.",
       "A Blazing Star.",
-      "The Heavens.",
-      "The Seven Stars."
+      "The Heavens."
     ],
     correctAnswer: "The Heavens."
   },
@@ -218,8 +201,7 @@ export const QUESTIONS: Question[] = [
     answers: [
       "A Lamb.",
       "A more agreeable victim.",
-      "A Ram caught in a thicket.",
-      "A burnt offering."
+      "A Ram caught in a thicket."
     ],
     correctAnswer: "A more agreeable victim."
   },
@@ -227,7 +209,6 @@ export const QUESTIONS: Question[] = [
     id: 19,
     text: "The \"Ornaments\" of the Lodge are the Mosaic Pavement, the Blazing Star, and the Indented Border. What does the \"Indented Border\" refer to?",
     answers: [
-      "The difference between day and night.",
       "The bond of friendship.",
       "The manifold blessings of nature.",
       "The Planets in their various revolutions."
@@ -239,7 +220,6 @@ export const QUESTIONS: Question[] = [
     text: "When discussing the \"Secrets\" of this degree, the Worshipful Master states that the \"Grip or Token\" demands a \"Word\". How must this Word be given?",
     answers: [
       "At length, but only in a whisper.",
-      "Only by letter.",
       "Never at length (except in open Lodge), but always by letters or syllables.",
       "By halving it with a Brother."
     ],
