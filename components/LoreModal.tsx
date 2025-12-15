@@ -8,8 +8,8 @@ interface LoreModalProps {
 }
 
 const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
-  // Generate the sprite URL on the fly based on the orb's sprite key
-  const spriteUrl = useMemo(() => generateSpriteUrl(orb.spriteKey), [orb.spriteKey]);
+  // Use procedural asset generator
+  const spriteUrl = generateSpriteUrl(orb.spriteKey);
 
   // Determine button text based on context
   const buttonText = useMemo(() => {
