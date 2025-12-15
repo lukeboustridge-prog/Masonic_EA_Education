@@ -811,8 +811,7 @@ const GameCanvas: React.FC = () => {
 
   const handleIncorrectAnswer = () => {
     playSound('error');
-    // Hardcore Mode: Reset entire game on wrong answer
-    resetGame();
+    setGameState(GameState.GAME_OVER);
   };
 
   // Touch Handlers
@@ -928,6 +927,46 @@ const GameCanvas: React.FC = () => {
           onCorrect={handleCorrectAnswer}
           onIncorrect={handleIncorrectAnswer}
         />
+      )}
+
+      {/* Game Over / Proficiency Failed Screen */}
+      {gameState === GameState.GAME_OVER && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-red-950/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="max-w-xl w-full bg-slate-900 border-4 border-red-600 rounded-xl p-8 shadow-2xl flex flex-col items-center text-center">
+            
+            <div className="w-20 h-20 bg-red-900/50 rounded-full flex items-center justify-center mb-6 border-4 border-red-500">
+                <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+            </div>
+
+            <h2 className="text-3xl md:text-4xl font-bold text-red-500 mb-4 uppercase tracking-wider">
+              Proficiency Failed
+            </h2>
+            
+            <p className="text-slate-200 text-lg md:text-xl mb-6 leading-relaxed">
+              To complete this degree, you must demonstrate 
+              <span className="text-amber-400 font-bold"> perfection</span>.
+            </p>
+            
+            <div className="bg-red-900/20 p-4 rounded-lg border border-red-800/50 mb-8">
+                <p className="text-red-200 font-serif italic">
+                    "You must answer all questions correctly, the first time, from start to finish. Make one mistake, and you return to the beginning."
+                </p>
+            </div>
+
+            <button 
+              onClick={resetGame}
+              className="
+                w-full md:w-auto px-8 py-4 
+                bg-red-700 hover:bg-red-600 active:bg-red-800
+                text-white font-bold text-lg rounded-lg 
+                border-b-4 border-red-900 active:border-b-0 active:translate-y-1
+                transition-all uppercase tracking-widest
+              "
+            >
+              Return to West Gate
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Victory Screen */}
