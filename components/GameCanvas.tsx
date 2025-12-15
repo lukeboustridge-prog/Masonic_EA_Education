@@ -159,7 +159,114 @@ const GameCanvas: React.FC = () => {
     };
   }, []);
 
-  // Helper to draw the Mason Sprite
+  // --- DRAWING HELPERS ---
+
+  // Procedural Stone Texture Generator
+  const drawStoneBlock = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    color: string,
+    isRough: boolean
+  ) => {
+    // 1. Base Fill
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+
+    ctx.save();
+    // Clip to ensure pattern stays inside
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+
+    // 2. Brick Pattern
+    const brickH = 20;
+    const brickW = 40;
+    
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; // Subtle Mortar
+    ctx.lineWidth = 1;
+
+    // Iterate rows
+    const startRow = Math.floor(y / brickH);
+    const endRow = Math.floor((y + h) / brickH) + 1;
+
+    for (let row = startRow; row < endRow; row++) {
+        const rowY = row * brickH;
+        
+        // Horizontal Line (Mortar)
+        ctx.beginPath();
+        ctx.moveTo(x, rowY);
+        ctx.lineTo(x + w, rowY);
+        ctx.stroke();
+
+        // Vertical Lines (Bricks)
+        // Offset logic
+        let offset = 0;
+        if (isRough) {
+            // Deterministic chaos based on row index for Rough Ashlar
+            offset = Math.abs(Math.sin(row * 432.1)) * brickW; 
+        } else {
+            // Perfect running bond for Perfect Ashlar
+            offset = (row % 2 === 0) ? 0 : (brickW / 2);
+        }
+
+        const startCol = Math.floor((x - offset) / brickW);
+        const endCol = Math.floor((x + w - offset) / brickW) + 1;
+
+        for (let col = startCol; col < endCol; col++) {
+            let brickX = col * brickW + offset;
+            
+            // Jitter brick position for rough look
+            if (isRough) {
+                brickX += Math.sin(row * col * 12.3) * 5;
+            }
+
+            if (brickX > x && brickX < x + w) {
+                ctx.beginPath();
+                ctx.moveTo(brickX, rowY);
+                ctx.lineTo(brickX, rowY + brickH);
+                ctx.stroke();
+            }
+        }
+    }
+
+    // 3. Noise / Texture Overlay
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    // Simple noise pattern (prime steps to avoid repeating)
+    for (let nx = x; nx < x + w; nx += 13) {
+        for (let ny = y; ny < y + h; ny += 17) {
+            if (Math.sin(nx * ny) > 0.5) {
+                ctx.fillRect(nx, ny, 2, 2);
+            }
+        }
+    }
+
+    ctx.restore(); // Remove clip
+
+    // 4. 3D Bevel (Highlight & Shadow)
+    const bevelSize = 4;
+    
+    // Top & Left (Highlight)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; 
+    ctx.lineWidth = bevelSize;
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+
+    // Bottom & Right (Shadow)
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.lineWidth = bevelSize;
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x + w, y);
+    ctx.stroke();
+  };
+
   const drawPlayerSprite = (ctx: CanvasRenderingContext2D, p: Player) => {
     ctx.save();
     ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
@@ -219,7 +326,6 @@ const GameCanvas: React.FC = () => {
   const drawCastleBackground = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, width: number, height: number) => {
     const GRID_SIZE = 400; 
     const WALL_COLOR = '#1e293b'; // Slate 800
-    const WINDOW_BG = '#020617'; // Slate 950
     const ACCENT_COLOR = '#334155'; // Slate 700
 
     // Calculate visible grid range
@@ -239,14 +345,9 @@ const GameCanvas: React.FC = () => {
         const winX = x + (GRID_SIZE - winW) / 2;
         const winY = y + (GRID_SIZE - winH) / 2;
 
-        // Window Interior (Sky)
-        ctx.fillStyle = WINDOW_BG;
-        ctx.beginPath();
-        ctx.rect(winX, winY + winH/2, winW, winH/2);
-        ctx.arc(winX + winW/2, winY + winH/2, winW/2, Math.PI, 0);
-        ctx.fill();
-
-        // Window Bars
+        // Draw Window Bars (Foreground structure)
+        // Note: We DO NOT fill the window background anymore, letting the Sky Gradient show through!
+        
         ctx.strokeStyle = '#0f172a'; // Slate 900
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -259,7 +360,6 @@ const GameCanvas: React.FC = () => {
         ctx.stroke();
 
         // Stone Texture (Pillars & Beams)
-        // We draw the "Structure" around the window
         
         // Vertical Pillar (Left of cell)
         ctx.fillStyle = WALL_COLOR;
@@ -273,7 +373,7 @@ const GameCanvas: React.FC = () => {
         ctx.fillRect(x - 25, y - 25, 50, 50);
         ctx.strokeRect(x - 25, y - 25, 50, 50);
 
-        // Torch?
+        // Torch
         if ((col + row) % 2 === 0) {
             ctx.fillStyle = '#451a03'; // Wood
             ctx.fillRect(x - 5, y + 150, 10, 30);
@@ -468,7 +568,12 @@ const GameCanvas: React.FC = () => {
     
     // Reset any previous state for a clear slate
     ctx.resetTransform(); 
-    ctx.fillStyle = '#2d3748';
+    
+    // 1. ATMOSPHERIC BACKGROUND (Vertical Gradient)
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, h);
+    bgGradient.addColorStop(0, '#020617'); // Dark Blue/Black (Night Sky)
+    bgGradient.addColorStop(1, '#1e293b'); // Slate (Horizon/Cave)
+    ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, w, h);
 
     ctx.save();
@@ -483,17 +588,12 @@ const GameCanvas: React.FC = () => {
     // We pass logical width/height (viewW, viewH)
     drawCastleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
 
-    // Draw Platforms
+    // Draw Platforms (Updated with Procedural Stone)
     platforms.forEach(plat => {
-      ctx.fillStyle = plat.color;
-      ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(plat.x, plat.y, plat.width, plat.height);
-      
-      // Top highlight
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      ctx.fillRect(plat.x, plat.y, plat.width, 5);
+      // Determine roughness based on progression
+      // < 4500 is "Starting/Rough", > 4500 approaches "Perfect"
+      const isRough = plat.x < 4500;
+      drawStoneBlock(ctx, plat.x, plat.y, plat.width, plat.height, plat.color, isRough);
     });
 
     // Draw Goal (The East)
@@ -523,6 +623,16 @@ const GameCanvas: React.FC = () => {
     drawPlayerSprite(ctx, player);
 
     ctx.restore();
+
+    // 2. VIGNETTE OVERLAY (Post-Processing)
+    // Draw on top of everything in screen coordinates to focus the eye
+    ctx.resetTransform();
+    const radius = Math.max(w, h) * 0.8;
+    const vignette = ctx.createRadialGradient(w/2, h/2, radius * 0.4, w/2, h/2, radius);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)'); // Transparent center
+    vignette.addColorStop(1, 'rgba(0,0,0,0.7)'); // Dark corners
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
   }, [gameState, dimensions]);
