@@ -197,7 +197,7 @@ const GameCanvas: React.FC = () => {
     }
   };
 
-  // Toggle Function with comprehensive prefix support and iOS Alert Fallback
+  // Toggle Function with comprehensive prefix support
   const toggleFullscreen = () => {
     try {
       const doc = document as any;
@@ -210,8 +210,8 @@ const GameCanvas: React.FC = () => {
         if (request) {
             request.call(docEl).catch((e: any) => console.log("Fullscreen request failed", e));
         } else {
-             // Fallback for iOS Safari which doesn't support the Fullscreen API in the browser
-             alert("To enable Fullscreen on iOS:\n\n1. Tap the Share button (bottom center)\n2. Select 'Add to Home Screen'");
+            // Fallback for systems that fail silently or don't support API in this context
+            console.log("Fullscreen API not available");
         }
       } else {
         const exit = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
@@ -219,7 +219,6 @@ const GameCanvas: React.FC = () => {
       }
     } catch (e) {
       console.log('Fullscreen API error', e);
-      alert("Fullscreen not supported on this device.");
     }
   };
 
@@ -1022,7 +1021,7 @@ const GameCanvas: React.FC = () => {
           {!isStandalone && (
             <button 
               onClick={toggleFullscreen}
-              className="bg-slate-800/80 p-2 rounded-lg border border-slate-600 backdrop-blur-sm text-slate-300 hover:text-white hover:bg-slate-700 transition-all active:scale-95"
+              className="bg-slate-800/80 p-2 rounded-lg border border-slate-600 pointer-events-auto transition active:scale-95 text-slate-300 hover:text-white"
               title="Toggle Fullscreen"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
