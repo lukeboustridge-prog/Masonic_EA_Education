@@ -682,7 +682,7 @@ const GameCanvas: React.FC = () => {
     if (activeQuestion) orbsStateRef.current.add(activeQuestion.id);
     setActiveQuestion(null);
 
-    // Fix: Reset keys and velocity so player doesn't auto-run after quiz
+    // CRITICAL FIX: Reset keys and velocity so player doesn't auto-run after quiz
     keysRef.current = {};
     playerRef.current.vx = 0;
 
