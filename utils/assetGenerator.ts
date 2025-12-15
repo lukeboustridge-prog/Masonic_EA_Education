@@ -1,6 +1,14 @@
 'use client';
 
+import { BASE64_SPRITES } from './base64Assets';
+
 export const generateSpriteUrl = (key: string): string => {
+  // 1. Check if a static Base64 string exists (Priority)
+  if (BASE64_SPRITES[key] && BASE64_SPRITES[key].length > 0) {
+      return BASE64_SPRITES[key];
+  }
+
+  // 2. Fallback: Procedural Canvas Generation
   if (typeof document === 'undefined') return '';
   const canvas = document.createElement('canvas');
   

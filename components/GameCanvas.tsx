@@ -12,9 +12,14 @@ import { generateSpriteUrl } from '../utils/assetGenerator';
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Dimensions state
-  const [dimensions, setDimensions] = useState({ w: window.innerWidth, h: window.innerHeight });
-  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+  // Dimensions state - Initialize safely for SSR/Window
+  const [dimensions, setDimensions] = useState({ 
+    w: typeof window !== 'undefined' ? window.innerWidth : 800, 
+    h: typeof window !== 'undefined' ? window.innerHeight : 600 
+  });
+  const [isPortrait, setIsPortrait] = useState(
+    typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false
+  );
   
   // Game State
   const [gameState, setGameState] = useState<GameState>(GameState.START_MENU);
@@ -75,8 +80,11 @@ const GameCanvas: React.FC = () => {
     const handleResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      setDimensions({ w, h });
-      setIsPortrait(h > w);
+      // Safety check for 0 dimensions
+      if (w > 0 && h > 0) {
+        setDimensions({ w, h });
+        setIsPortrait(h > w);
+      }
     };
     
     // Initial call
@@ -109,7 +117,7 @@ const GameCanvas: React.FC = () => {
           throw new Error('API Error');
         }
       } catch (e) {
-        console.error("Failed to fetch global leaderboard, falling back to local", e);
+        // console.error("Failed to fetch global leaderboard, falling back to local", e);
         const stored = localStorage.getItem('masonic_leaderboard');
         if (stored) {
           try {
@@ -165,7 +173,7 @@ const GameCanvas: React.FC = () => {
     }
   }, []);
 
-  // Preload Sprites (PROCEDURAL GENERATION)
+  // Preload Sprites
   useEffect(() => {
     const uniqueKeys = Array.from(new Set(ORB_DATA.map(o => o.spriteKey)));
     
@@ -193,6 +201,11 @@ const GameCanvas: React.FC = () => {
     const ctx = audioContextRef.current;
     if (!ctx) return;
     
+    // Resume if suspended (PC requirement)
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -467,229 +480,236 @@ const GameCanvas: React.FC = () => {
   const gameLoop = useCallback(() => {
     if (gameState !== GameState.PLAYING) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    ctx.imageSmoothingEnabled = false;
-
-    const { w, h } = dimensions;
-    const scaleRatio = h / DESIGN_HEIGHT;
-    const viewW = w / scaleRatio;
-    const viewH = DESIGN_HEIGHT;
-
-    const player = playerRef.current;
-    const keys = keysRef.current;
-    
-    const groundRefY = DESIGN_HEIGHT - 40;
-    
-    const platforms: Platform[] = PLATFORM_DATA.map(p => ({
-      x: p.x,
-      y: groundRefY + p.yOffset,
-      width: p.width,
-      height: p.height,
-      color: p.color
-    }));
-
-    const orbs: Orb[] = ORB_DATA.map(o => ({
-      ...o,
-      x: o.x,
-      y: groundRefY + o.yOffset,
-      active: !orbsStateRef.current.has(o.id)
-    }));
-
-    // --- PHYSICS ---
-    if (keys['ArrowLeft']) { player.vx -= 1; player.facing = -1; }
-    if (keys['ArrowRight']) { player.vx += 1; player.facing = 1; }
-
-    if (player.vx > MOVE_SPEED) player.vx = MOVE_SPEED;
-    if (player.vx < -MOVE_SPEED) player.vx = -MOVE_SPEED;
-    player.vx *= FRICTION;
-    if (Math.abs(player.vx) < 0.1) player.vx = 0;
-    player.x += player.vx;
-    player.vy += GRAVITY;
-    player.y += player.vy;
-
-    for (const cp of CHECKPOINTS) {
-        if (player.x > cp.x && cp.x > lastCheckpointRef.current.x) {
-            lastCheckpointRef.current = { x: cp.x, y: groundRefY + cp.yOffset - 100 };
-            setCheckpointPopup(true);
-            playSound('lore');
-            
-            if (checkpointTimeoutRef.current) window.clearTimeout(checkpointTimeoutRef.current);
-            checkpointTimeoutRef.current = window.setTimeout(() => {
-                setCheckpointPopup(false);
-            }, 3000);
-        }
-    }
-
-    if (player.x < 0) { player.x = 0; player.vx = 0; }
-    if (player.x > WORLD_WIDTH - player.width) { player.x = WORLD_WIDTH - player.width; player.vx = 0; }
-    
-    if (player.y > groundRefY + 600) { 
-      player.x = lastCheckpointRef.current.x;
-      player.y = lastCheckpointRef.current.y;
-      player.vx = 0; player.vy = 0; player.jumpCount = 0; player.coyoteTimer = 0;
-      playSound('error');
-    }
-
-    player.isGrounded = false;
-    for (const plat of platforms) {
-      if (
-        player.x < plat.x + plat.width &&
-        player.x + player.width > plat.x &&
-        player.y < plat.y + plat.height &&
-        player.y + player.height > plat.y
-      ) {
-        const overlapX = (player.width + plat.width) / 2 - Math.abs((player.x + player.width / 2) - (plat.x + plat.width / 2));
-        const overlapY = (player.height + plat.height) / 2 - Math.abs((player.y + player.height / 2) - (plat.y + plat.height / 2));
-
-        if (overlapX < overlapY) {
-          if (player.vx > 0) player.x = plat.x - player.width;
-          else player.x = plat.x + plat.width;
-          player.vx = 0;
-        } else {
-          if (player.vy > 0) {
-            player.y = plat.y - player.height;
-            player.isGrounded = true;
-            player.vy = 0;
-            player.jumpCount = 0; 
-          } else {
-            player.y = plat.y + plat.height;
-            player.vy = 0;
-          }
-        }
-      }
-    }
-
-    if (player.isGrounded) player.coyoteTimer = 6;
-    else if (player.coyoteTimer > 0) player.coyoteTimer--;
-
-    if (player.x + player.width > GOAL_X) {
-      const maxScore = ORB_DATA.length * 100;
-      if (score >= maxScore) {
-        setGameState(GameState.VICTORY);
-        saveScoreToLeaderboard(score + 500, true); 
-        playSound('win');
-        return; 
-      } else {
-         player.x = GOAL_X - player.width - 5;
-         player.vx = 0;
-         if (!warningMessage) {
-            const missing = maxScore - score;
-            setWarningMessage(`Access Denied. Need ${missing} more points.`);
-            playSound('error');
-            if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
-            warningTimeoutRef.current = window.setTimeout(() => setWarningMessage(null), 3000);
-         }
-      }
-    }
-
-    for (const orb of orbs) {
-      if (!orb.active) continue;
-      const dx = (player.x + player.width / 2) - orb.x;
-      const dy = (player.y + player.height / 2) - orb.y;
-      if (Math.sqrt(dx * dx + dy * dy) < orb.radius + player.width / 2 + 10) {
-        setActiveOrb(orb);
-        playerRef.current.vx = 0;
-        keysRef.current = {};
-        if (seenLoreRef.current.has(orb.spriteKey)) {
-            if (orb.questionId !== undefined) {
-                 const question = QUESTIONS.find(q => q.id === orb.questionId);
-                 if (question) {
-                     setActiveQuestion(question);
-                     setGameState(GameState.QUIZ);
-                     playSound('lore'); 
-                 } else handleCorrectAnswer(); 
-            } else handleCorrectAnswer();
-        } else {
-            seenLoreRef.current.add(orb.spriteKey);
-            setGameState(GameState.LORE); 
-            playSound('lore');
-        }
-        return;
-      }
-    }
-
-    let targetCamX = player.x - viewW / 2 + player.width / 2;
-    const lookAheadY = player.vy * 10; 
-    let targetCamY = (player.y - viewH * 0.5) + lookAheadY;
-    if (targetCamX < 0) targetCamX = 0;
-    const maxScrollX = WORLD_WIDTH - viewW;
-    if (targetCamX > maxScrollX) targetCamX = maxScrollX;
-    cameraRef.current.x += (targetCamX - cameraRef.current.x) * 0.12;
-    cameraRef.current.y += (targetCamY - cameraRef.current.y) * 0.1; 
-
-    ctx.resetTransform(); 
-    ctx.clearRect(0,0,w,h);
-    ctx.save();
-    ctx.scale(scaleRatio, scaleRatio);
-    ctx.translate(-Math.floor(cameraRef.current.x), -Math.floor(cameraRef.current.y));
-
-    drawTempleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
-
-    CHECKPOINTS.forEach(cp => {
-        // Load Square and Compass (generated as 'square_compass')
-        const cpImg = spritesRef.current['square_compass'];
-        const isPassed = lastCheckpointRef.current.x >= cp.x;
-        const cpX = cp.x;
-        const cpY = groundRefY + cp.yOffset - 50; 
+    try {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
         
-        if (cpImg && cpImg.complete && cpImg.naturalWidth > 0) {
-            ctx.save();
-            ctx.globalAlpha = isPassed ? 1.0 : 0.3; 
-            if (isPassed) {
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#fbbf24';
+        ctx.imageSmoothingEnabled = false;
+
+        const { w, h } = dimensions;
+        // Safety for zero dimensions
+        if (w === 0 || h === 0) return;
+
+        const scaleRatio = h / DESIGN_HEIGHT;
+        const viewW = w / scaleRatio;
+        const viewH = DESIGN_HEIGHT;
+
+        const player = playerRef.current;
+        const keys = keysRef.current;
+        
+        const groundRefY = DESIGN_HEIGHT - 40;
+        
+        const platforms: Platform[] = PLATFORM_DATA.map(p => ({
+        x: p.x,
+        y: groundRefY + p.yOffset,
+        width: p.width,
+        height: p.height,
+        color: p.color
+        }));
+
+        const orbs: Orb[] = ORB_DATA.map(o => ({
+        ...o,
+        x: o.x,
+        y: groundRefY + o.yOffset,
+        active: !orbsStateRef.current.has(o.id)
+        }));
+
+        // --- PHYSICS ---
+        if (keys['ArrowLeft']) { player.vx -= 1; player.facing = -1; }
+        if (keys['ArrowRight']) { player.vx += 1; player.facing = 1; }
+
+        if (player.vx > MOVE_SPEED) player.vx = MOVE_SPEED;
+        if (player.vx < -MOVE_SPEED) player.vx = -MOVE_SPEED;
+        player.vx *= FRICTION;
+        if (Math.abs(player.vx) < 0.1) player.vx = 0;
+        player.x += player.vx;
+        player.vy += GRAVITY;
+        player.y += player.vy;
+
+        for (const cp of CHECKPOINTS) {
+            if (player.x > cp.x && cp.x > lastCheckpointRef.current.x) {
+                lastCheckpointRef.current = { x: cp.x, y: groundRefY + cp.yOffset - 100 };
+                setCheckpointPopup(true);
+                playSound('lore');
+                
+                if (checkpointTimeoutRef.current) window.clearTimeout(checkpointTimeoutRef.current);
+                checkpointTimeoutRef.current = window.setTimeout(() => {
+                    setCheckpointPopup(false);
+                }, 3000);
             }
-            ctx.drawImage(cpImg, cpX - 20, cpY, 40, 40);
-            ctx.restore();
-        } else {
-            ctx.fillStyle = isPassed ? '#fbbf24' : '#475569';
-            ctx.beginPath(); ctx.arc(cpX, cpY + 20, 10, 0, Math.PI * 2); ctx.fill();
         }
-    });
 
-    platforms.forEach(plat => {
-      drawStoneBlock(ctx, plat.x, plat.y, plat.width, plat.height, plat.color);
-    });
+        if (player.x < 0) { player.x = 0; player.vx = 0; }
+        if (player.x > WORLD_WIDTH - player.width) { player.x = WORLD_WIDTH - player.width; player.vx = 0; }
+        
+        if (player.y > groundRefY + 600) { 
+        player.x = lastCheckpointRef.current.x;
+        player.y = lastCheckpointRef.current.y;
+        player.vx = 0; player.vy = 0; player.jumpCount = 0; player.coyoteTimer = 0;
+        playSound('error');
+        }
 
-    const isGoalUnlocked = score >= ORB_DATA.length * 100;
-    ctx.fillStyle = isGoalUnlocked ? '#fbbf24' : '#ef4444'; 
-    ctx.globalAlpha = 0.8;
-    ctx.fillRect(GOAL_X, groundRefY - 150, 50, 150);
-    ctx.beginPath(); ctx.arc(GOAL_X + 25, groundRefY - 150, 25, Math.PI, 0); ctx.fill();
-    ctx.globalAlpha = 1.0;
+        player.isGrounded = false;
+        for (const plat of platforms) {
+        if (
+            player.x < plat.x + plat.width &&
+            player.x + player.width > plat.x &&
+            player.y < plat.y + plat.height &&
+            player.y + player.height > plat.y
+        ) {
+            const overlapX = (player.width + plat.width) / 2 - Math.abs((player.x + player.width / 2) - (plat.x + plat.width / 2));
+            const overlapY = (player.height + plat.height) / 2 - Math.abs((player.y + player.height / 2) - (plat.y + plat.height / 2));
 
-    orbs.forEach(orb => {
-      if (!orb.active) return;
-      const img = spritesRef.current[orb.spriteKey];
-      const size = 40; 
-      
-      if (img && img.complete && img.naturalHeight !== 0) {
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = '#fbbf24'; 
-          ctx.drawImage(img, orb.x - size/2, orb.y - size/2, size, size);
-          ctx.shadowBlur = 0;
-      } else {
-          ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
-          ctx.fillStyle = '#f59e0b'; ctx.fill();
-          ctx.fillStyle = 'black'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(orb.name[0], orb.x, orb.y);
-      }
-    });
+            if (overlapX < overlapY) {
+            if (player.vx > 0) player.x = plat.x - player.width;
+            else player.x = plat.x + plat.width;
+            player.vx = 0;
+            } else {
+            if (player.vy > 0) {
+                player.y = plat.y - player.height;
+                player.isGrounded = true;
+                player.vy = 0;
+                player.jumpCount = 0; 
+            } else {
+                player.y = plat.y + plat.height;
+                player.vy = 0;
+            }
+            }
+        }
+        }
 
-    drawPlayerSprite(ctx, player, hasApron);
-    ctx.restore();
+        if (player.isGrounded) player.coyoteTimer = 6;
+        else if (player.coyoteTimer > 0) player.coyoteTimer--;
 
-    ctx.resetTransform();
-    const radius = Math.max(w, h) * 0.8;
-    const vignette = ctx.createRadialGradient(w/2, h/2, radius * 0.4, w/2, h/2, radius);
-    vignette.addColorStop(0, 'rgba(0,0,0,0)'); 
-    vignette.addColorStop(1, 'rgba(0,0,0,0.7)');
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, w, h);
+        if (player.x + player.width > GOAL_X) {
+        const maxScore = ORB_DATA.length * 100;
+        if (score >= maxScore) {
+            setGameState(GameState.VICTORY);
+            saveScoreToLeaderboard(score + 500, true); 
+            playSound('win');
+            return; 
+        } else {
+            player.x = GOAL_X - player.width - 5;
+            player.vx = 0;
+            if (!warningMessage) {
+                const missing = maxScore - score;
+                setWarningMessage(`Access Denied. Need ${missing} more points.`);
+                playSound('error');
+                if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+                warningTimeoutRef.current = window.setTimeout(() => setWarningMessage(null), 3000);
+            }
+        }
+        }
+
+        for (const orb of orbs) {
+        if (!orb.active) continue;
+        const dx = (player.x + player.width / 2) - orb.x;
+        const dy = (player.y + player.height / 2) - orb.y;
+        if (Math.sqrt(dx * dx + dy * dy) < orb.radius + player.width / 2 + 10) {
+            setActiveOrb(orb);
+            playerRef.current.vx = 0;
+            keysRef.current = {};
+            if (seenLoreRef.current.has(orb.spriteKey)) {
+                if (orb.questionId !== undefined) {
+                    const question = QUESTIONS.find(q => q.id === orb.questionId);
+                    if (question) {
+                        setActiveQuestion(question);
+                        setGameState(GameState.QUIZ);
+                        playSound('lore'); 
+                    } else handleCorrectAnswer(); 
+                } else handleCorrectAnswer();
+            } else {
+                seenLoreRef.current.add(orb.spriteKey);
+                setGameState(GameState.LORE); 
+                playSound('lore');
+            }
+            return;
+        }
+        }
+
+        let targetCamX = player.x - viewW / 2 + player.width / 2;
+        const lookAheadY = player.vy * 10; 
+        let targetCamY = (player.y - viewH * 0.5) + lookAheadY;
+        if (targetCamX < 0) targetCamX = 0;
+        const maxScrollX = WORLD_WIDTH - viewW;
+        if (targetCamX > maxScrollX) targetCamX = maxScrollX;
+        cameraRef.current.x += (targetCamX - cameraRef.current.x) * 0.12;
+        cameraRef.current.y += (targetCamY - cameraRef.current.y) * 0.1; 
+
+        ctx.resetTransform(); 
+        ctx.clearRect(0,0,w,h);
+        ctx.save();
+        ctx.scale(scaleRatio, scaleRatio);
+        ctx.translate(-Math.floor(cameraRef.current.x), -Math.floor(cameraRef.current.y));
+
+        drawTempleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
+
+        CHECKPOINTS.forEach(cp => {
+            // Load Square and Compass (generated as 'square_compass')
+            const cpImg = spritesRef.current['square_compass'];
+            const isPassed = lastCheckpointRef.current.x >= cp.x;
+            const cpX = cp.x;
+            const cpY = groundRefY + cp.yOffset - 50; 
+            
+            if (cpImg && cpImg.complete && cpImg.naturalWidth > 0) {
+                ctx.save();
+                ctx.globalAlpha = isPassed ? 1.0 : 0.3; 
+                if (isPassed) {
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#fbbf24';
+                }
+                ctx.drawImage(cpImg, cpX - 20, cpY, 40, 40);
+                ctx.restore();
+            } else {
+                ctx.fillStyle = isPassed ? '#fbbf24' : '#475569';
+                ctx.beginPath(); ctx.arc(cpX, cpY + 20, 10, 0, Math.PI * 2); ctx.fill();
+            }
+        });
+
+        platforms.forEach(plat => {
+        drawStoneBlock(ctx, plat.x, plat.y, plat.width, plat.height, plat.color);
+        });
+
+        const isGoalUnlocked = score >= ORB_DATA.length * 100;
+        ctx.fillStyle = isGoalUnlocked ? '#fbbf24' : '#ef4444'; 
+        ctx.globalAlpha = 0.8;
+        ctx.fillRect(GOAL_X, groundRefY - 150, 50, 150);
+        ctx.beginPath(); ctx.arc(GOAL_X + 25, groundRefY - 150, 25, Math.PI, 0); ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        orbs.forEach(orb => {
+        if (!orb.active) return;
+        const img = spritesRef.current[orb.spriteKey];
+        const size = 40; 
+        
+        if (img && img.complete && img.naturalHeight !== 0) {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#fbbf24'; 
+            ctx.drawImage(img, orb.x - size/2, orb.y - size/2, size, size);
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#f59e0b'; ctx.fill();
+            ctx.fillStyle = 'black'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(orb.name[0], orb.x, orb.y);
+        }
+        });
+
+        drawPlayerSprite(ctx, player, hasApron);
+        ctx.restore();
+
+        ctx.resetTransform();
+        const radius = Math.max(w, h) * 0.8;
+        const vignette = ctx.createRadialGradient(w/2, h/2, radius * 0.4, w/2, h/2, radius);
+        vignette.addColorStop(0, 'rgba(0,0,0,0)'); 
+        vignette.addColorStop(1, 'rgba(0,0,0,0.7)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, w, h);
+    } catch (e) {
+        console.error("Game Loop Error:", e);
+    }
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
   }, [gameState, dimensions, hasApron, warningMessage, score, leaderboard, playerName]); 
@@ -735,14 +755,14 @@ const GameCanvas: React.FC = () => {
     setGameState(GameState.GAME_OVER);
   };
 
-  const handleTouchStart = (key: string) => (e: React.TouchEvent) => {
+  const handleInputStart = (key: string) => (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault(); 
     enterFullscreen();
     if (key === 'Space') executeJump();
     keysRef.current[key] = true;
   };
 
-  const handleTouchEnd = (key: string) => (e: React.TouchEvent) => {
+  const handleInputEnd = (key: string) => (e: React.TouchEvent | React.MouseEvent) => {
     e.preventDefault();
     keysRef.current[key] = false;
     if (key === 'Space' && playerRef.current.vy < 0) playerRef.current.vy *= 0.5;
@@ -883,15 +903,27 @@ const GameCanvas: React.FC = () => {
         <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-end pb-4 px-4">
             <div className="flex justify-between items-end w-full select-none mb-2">
                 <div className="flex gap-4 pointer-events-auto">
-                    <button className="w-24 h-24 bg-white/10 rounded-full backdrop-blur-md border-2 border-white/20 active:bg-white/30 flex items-center justify-center transition-all active:scale-95 shadow-lg" onTouchStart={handleTouchStart('ArrowLeft')} onTouchEnd={handleTouchEnd('ArrowLeft')}>
+                    <button 
+                        className="w-24 h-24 bg-white/10 rounded-full backdrop-blur-md border-2 border-white/20 active:bg-white/30 flex items-center justify-center transition-all active:scale-95 shadow-lg" 
+                        onMouseDown={handleInputStart('ArrowLeft')} onMouseUp={handleInputEnd('ArrowLeft')} onMouseLeave={handleInputEnd('ArrowLeft')}
+                        onTouchStart={handleInputStart('ArrowLeft')} onTouchEnd={handleInputEnd('ArrowLeft')}
+                    >
                         <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                     </button>
-                    <button className="w-24 h-24 bg-white/10 rounded-full backdrop-blur-md border-2 border-white/20 active:bg-white/30 flex items-center justify-center transition-all active:scale-95 shadow-lg" onTouchStart={handleTouchStart('ArrowRight')} onTouchEnd={handleTouchEnd('ArrowRight')}>
+                    <button 
+                        className="w-24 h-24 bg-white/10 rounded-full backdrop-blur-md border-2 border-white/20 active:bg-white/30 flex items-center justify-center transition-all active:scale-95 shadow-lg" 
+                        onMouseDown={handleInputStart('ArrowRight')} onMouseUp={handleInputEnd('ArrowRight')} onMouseLeave={handleInputEnd('ArrowRight')}
+                        onTouchStart={handleInputStart('ArrowRight')} onTouchEnd={handleInputEnd('ArrowRight')}
+                    >
                         <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                     </button>
                 </div>
                 <div className="pointer-events-auto pl-8">
-                    <button className="w-28 h-28 bg-blue-500/20 rounded-full backdrop-blur-md border-2 border-blue-400/40 active:bg-blue-500/40 flex items-center justify-center transition-all active:scale-95 shadow-lg" onTouchStart={handleTouchStart('Space')} onTouchEnd={handleTouchEnd('Space')}>
+                    <button 
+                        className="w-28 h-28 bg-blue-500/20 rounded-full backdrop-blur-md border-2 border-blue-400/40 active:bg-blue-500/40 flex items-center justify-center transition-all active:scale-95 shadow-lg" 
+                        onMouseDown={handleInputStart('Space')} onMouseUp={handleInputEnd('Space')} onMouseLeave={handleInputEnd('Space')}
+                        onTouchStart={handleInputStart('Space')} onTouchEnd={handleInputEnd('Space')}
+                    >
                         <span className="font-bold text-white tracking-wider text-lg">JUMP</span>
                     </button>
                 </div>
