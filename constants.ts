@@ -221,60 +221,81 @@ export const PLATFORM_DATA = [
 
 export const GOAL_X = 7800;
 
-// Working Tools Data
-const TOOLS = [
-  {
+// Dictionary of Tools
+const TOOLS = {
+  APRON: {
+    name: "Masonic Apron",
+    spriteKey: "apron",
+    blurb: "The Lambskin Apron is the badge of innocence and the bond of friendship, more ancient than the Golden Fleece or Roman Eagle."
+  },
+  GAUGE: {
     name: "24 Inch Gauge",
     spriteKey: "gauge",
     blurb: "The 24 Inch Gauge represents the 24 hours of the day, teaching us to divide our time into prayer, labor, refreshment, and sleep."
   },
-  {
+  GAVEL: {
     name: "Common Gavel",
     spriteKey: "gavel",
     blurb: "The Common Gavel represents the force of conscience, used to knock off all superfluous knobs and excrescences from the rude material."
   },
-  {
+  CHISEL: {
     name: "Chisel",
     spriteKey: "chisel",
     blurb: "The Chisel points out to us the advantages of education, by which means alone we are rendered fit members of regularly organised society."
   },
-  {
+  ROUGH: {
     name: "Rough Ashlar",
     spriteKey: "rough_ashlar",
     blurb: "The Rough Ashlar represents man in his infant or primitive state, rough and unpolished, until by education his mind becomes cultivated."
   },
-  {
+  PERFECT: {
     name: "Perfect Ashlar",
     spriteKey: "perfect_ashlar",
     blurb: "The Perfect Ashlar is a stone of a true die or square, representing the mind of man in the decline of his years, after a life well spent."
   },
-  {
+  LADDER: {
     name: "Jacob's Ladder",
     spriteKey: "ladder",
     blurb: "Jacob's Ladder represents the moral virtues, principally Faith, Hope, and Charity, reaching to the heavens."
   }
-];
-
-// Helper to assign tools to orbs cyclically
-const getTool = (index: number) => TOOLS[index % TOOLS.length];
+};
 
 export const ORB_DATA: OrbDefinition[] = [
-  // Section 1
-  { id: 1, x: 875, yOffset: -300, radius: 20, questionId: 1, ...getTool(0) }, 
-  // Section 2
-  { id: 2, x: 1450, yOffset: -630, radius: 20, questionId: 2, ...getTool(1) },
-  // Section 3
-  { id: 3, x: 2550, yOffset: -250, radius: 20, questionId: 3, ...getTool(2) },
-  // Section 4 (Mines)
-  { id: 4, x: 3700, yOffset: 300, radius: 20, questionId: 4, ...getTool(3) },
-  // Section 5
-  { id: 5, x: 4640, yOffset: -200, radius: 20, questionId: 5, ...getTool(4) },
-  // Section 6 (Peak)
-  { id: 6, x: 5350, yOffset: -800, radius: 20, questionId: 6, ...getTool(5) },
-  // Section 7
-  { id: 7, x: 6050, yOffset: -550, radius: 20, questionId: 7, ...getTool(0) },
-  { id: 8, x: 6650, yOffset: -350, radius: 20, questionId: 8, ...getTool(1) },
-  // Section 8
-  { id: 9, x: 7275, yOffset: -200, radius: 20, questionId: 9, ...getTool(2) },
-  { id: 10, x: 7575, yOffset: -300, radius: 20, questionId: 10, ...getTool(3) },
+  // --- Start / Preparation ---
+  { id: 1, x: 400, yOffset: -50, radius: 20, questionId: 1, ...TOOLS.APRON },
+  { id: 2, x: 800, yOffset: -300, radius: 20, questionId: 2, ...TOOLS.APRON },
+  
+  // --- Tower 1 ---
+  // Introduce Tools 1st time
+  { id: 3, x: 1250, yOffset: -170, radius: 20, questionId: 3, ...TOOLS.GAUGE }, // Gauge Intro
+  { id: 4, x: 1350, yOffset: -390, radius: 20, questionId: 4, ...TOOLS.GAVEL }, // Gavel Intro
+  { id: 5, x: 1450, yOffset: -650, radius: 20, questionId: 5, ...TOOLS.CHISEL }, // Chisel Intro
+
+  // --- Hills ---
+  { id: 6, x: 1850, yOffset: -350, radius: 20, questionId: 6, ...TOOLS.ROUGH }, // Rough Intro
+  { id: 7, x: 2300, yOffset: -150, radius: 20, questionId: 7, ...TOOLS.PERFECT }, // Perfect Intro
+  { id: 8, x: 2700, yOffset: -150, radius: 20, questionId: 8, ...TOOLS.LADDER }, // Ladder Intro
+
+  // --- Mines ---
+  // Specific Questions (Gauge Q10, Gavel Q11) matched to their 2nd appearance
+  { id: 9, x: 3100, yOffset: 100, radius: 20, questionId: 9, ...TOOLS.APRON }, 
+  { id: 10, x: 3500, yOffset: 300, radius: 20, questionId: 10, ...TOOLS.GAUGE }, // Q10: Gauge Question -> Gauge Tool
+  { id: 11, x: 3850, yOffset: 50, radius: 20, questionId: 11, ...TOOLS.GAVEL }, // Q11: Gavel Question -> Gavel Tool
+
+  // --- Bridge ---
+  { id: 12, x: 4450, yOffset: -100, radius: 20, questionId: 12, ...TOOLS.CHISEL }, // Q12: Jewels -> Chisel
+  { id: 13, x: 4750, yOffset: -100, radius: 20, questionId: 13, ...TOOLS.ROUGH }, // Q13: Rough Ashlar Q -> Rough Tool
+
+  // --- High Tower ---
+  { id: 14, x: 5150, yOffset: -200, radius: 20, questionId: 14, ...TOOLS.PERFECT },
+  { id: 15, x: 5250, yOffset: -800, radius: 20, questionId: 15, ...TOOLS.LADDER }, // Q15: Ladder Q -> Ladder Tool
+
+  // --- Floating Isles ---
+  { id: 16, x: 5750, yOffset: -650, radius: 20, questionId: 16, ...TOOLS.APRON },
+  { id: 17, x: 6350, yOffset: -450, radius: 20, questionId: 17, ...TOOLS.APRON },
+  { id: 18, x: 6650, yOffset: -350, radius: 20, questionId: 18, ...TOOLS.APRON },
+
+  // --- Final Stretch ---
+  { id: 19, x: 7200, yOffset: -200, radius: 20, questionId: 19, ...TOOLS.APRON },
+  { id: 20, x: 7500, yOffset: -300, radius: 20, questionId: 20, ...TOOLS.APRON },
 ];

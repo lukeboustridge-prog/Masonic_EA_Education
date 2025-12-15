@@ -37,6 +37,9 @@ const GameCanvas: React.FC = () => {
   
   const orbsStateRef = useRef<Set<number>>(new Set()); // IDs of inactive orbs
   
+  // Lore State Logic: Track which lore types (sprite keys) have been seen in this run
+  const seenLoreRef = useRef<Set<string>>(new Set());
+
   // Checkpoint State
   const lastCheckpointRef = useRef({ x: 50, y: DESIGN_HEIGHT - 100 });
   const checkpointTimeoutRef = useRef<number | null>(null);
@@ -82,6 +85,8 @@ const GameCanvas: React.FC = () => {
     const uniqueKeys = Array.from(new Set(ORB_DATA.map(o => o.spriteKey)));
     // Add Checkpoint Sprite
     uniqueKeys.push('square_compass');
+    // Ensure Apron is loaded if not explicitly in ORB_DATA (it is, but safe to keep logic)
+    if (!uniqueKeys.includes('apron')) uniqueKeys.push('apron');
     
     uniqueKeys.forEach(key => {
         const img = new Image();
@@ -602,13 +607,29 @@ const GameCanvas: React.FC = () => {
       // Increased collision radius slightly for tools
       if (Math.sqrt(dx * dx + dy * dy) < orb.radius + player.width / 2 + 10) {
         setActiveOrb(orb);
-        setGameState(GameState.LORE); // Go to LORE first
-        playSound('lore');
         
         // Stop movement
         playerRef.current.vx = 0;
         keysRef.current = {};
         
+        // Logic: Have we seen this lore type (spriteKey) before?
+        if (seenLoreRef.current.has(orb.spriteKey)) {
+            // Yes: Skip Lore, go straight to Quiz
+            const question = QUESTIONS.find(q => q.id === orb.questionId);
+            if (question) {
+                setActiveQuestion(question);
+                setGameState(GameState.QUIZ);
+                playSound('lore'); // Still play the sound
+            } else {
+                handleCorrectAnswer(); // Fallback if question missing
+            }
+        } else {
+            // No: Show Lore Modal
+            seenLoreRef.current.add(orb.spriteKey);
+            setGameState(GameState.LORE); 
+            playSound('lore');
+        }
+
         return;
       }
     }
@@ -778,6 +799,10 @@ const GameCanvas: React.FC = () => {
     setCheckpointPopup(false);
     setActiveQuestion(null); // Clear question state
     cameraRef.current = { x: 0, y: 0 };
+    
+    // Clear Seen Lore State for a fresh "run" where you can read definitions again
+    seenLoreRef.current.clear();
+    
     setGameState(GameState.PLAYING);
   };
 
