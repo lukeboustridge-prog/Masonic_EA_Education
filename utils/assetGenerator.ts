@@ -47,14 +47,29 @@ export const generateSpriteUrl = (key: string): string => {
 
     case 'gavel': // Common Gavel
         ctx.translate(cx, cy); ctx.rotate(-Math.PI / 4);
+        
         // Handle (Dark Wood)
         fillRect(-2, 0, 4, 14, '#78350f'); 
-        // Head (Stone/Iron)
-        fillRect(-8, -10, 16, 10, '#475569'); // Slate 600
-        fillRect(-8, -10, 16, 2, '#64748b');  // Highlight
-        // Detail bands
-        fillRect(-6, -10, 1, 10, '#334155'); 
-        fillRect(5, -10, 1, 10, '#334155'); 
+        
+        // Head (Wood - Setting Maul/Gavel Style)
+        // Main Block (Rich Wood)
+        ctx.fillStyle = '#92400e'; 
+        ctx.beginPath();
+        // Mallet shape: wider in middle, tapered slightly or cylindrical
+        ctx.moveTo(-4, -12); ctx.lineTo(-10, -10); ctx.lineTo(-10, -2); ctx.lineTo(-4, 0); // Striking Face
+        ctx.lineTo(4, 0); ctx.lineTo(10, -2); ctx.lineTo(10, -10); ctx.lineTo(4, -12); // Back Face
+        ctx.closePath();
+        ctx.fill();
+
+        // Highlight/Grain
+        ctx.fillStyle = '#b45309'; 
+        ctx.fillRect(-8, -9, 16, 2);
+
+        // Cutting Edge / Chisel Point (Optional but traditional for stone gavel)
+        // If we want "wooden mallet", the above cylindrical shape is better. 
+        // If we want "Common Gavel" (stone hammer), it has a sharp edge.
+        // User asked for "Wooden", implies a Master's Gavel or Maul.
+        // Let's stick to the mallet block shape above.
         break;
 
     case 'chisel': // Chisel
@@ -102,21 +117,34 @@ export const generateSpriteUrl = (key: string): string => {
 
     case 'apron': // Masonic Apron
         ctx.translate(cx, cy);
-        // Main Body (White)
-        ctx.fillStyle = '#f8fafc'; 
+        
+        // Strings/Belt
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-16, -8); ctx.lineTo(16, -8); // Waist string
+        ctx.stroke();
+
+        // Main Body (White Square)
+        ctx.fillStyle = '#ffffff'; 
         ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowBlur = 4;
-        ctx.fillRect(-10, -8, 20, 16);
+        ctx.fillRect(-11, -8, 22, 18);
         ctx.shadowBlur = 0;
-        // Border (Subtle Grey for EA)
-        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
-        ctx.strokeRect(-10.5, -8.5, 20, 16);
-        // Flap (Triangle Up for Entered Apprentice)
-        ctx.beginPath(); ctx.moveTo(-10, -8); ctx.lineTo(0, -18); ctx.lineTo(10, -8); 
-        ctx.fillStyle = '#f1f5f9'; ctx.fill(); ctx.stroke();
-        // Strings
-        ctx.beginPath(); ctx.moveTo(-10, -8); ctx.lineTo(-14, -4);
-        ctx.moveTo(10, -8); ctx.lineTo(14, -4);
-        ctx.strokeStyle = '#f8fafc'; ctx.stroke();
+        
+        // Border/Outline
+        ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+        ctx.strokeRect(-11, -8, 22, 18);
+
+        // Flap (Triangle Up for EA)
+        // A distinct triangular flap standing up from the waistline
+        ctx.beginPath(); 
+        ctx.moveTo(-11, -8); 
+        ctx.lineTo(11, -8); 
+        ctx.lineTo(0, -18); 
+        ctx.closePath();
+        ctx.fillStyle = '#ffffff'; 
+        ctx.fill(); 
+        ctx.stroke();
         break;
 
     case 'square_compass': // Logo/Checkpoint

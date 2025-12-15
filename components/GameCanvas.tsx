@@ -13,13 +13,14 @@ const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Dimensions state - Initialize safely for SSR/Window to prevent 0x0
+  // Added || 800 fallback in case window exists but reports 0 dimensions (hidden iframe)
   const [dimensions, setDimensions] = useState({ 
-    w: typeof window !== 'undefined' ? window.innerWidth : 800, 
-    h: typeof window !== 'undefined' ? window.innerHeight : 600 
+    w: typeof window !== 'undefined' ? (window.innerWidth || 800) : 800, 
+    h: typeof window !== 'undefined' ? (window.innerHeight || 600) : 600 
   });
-  const [isPortrait, setIsPortrait] = useState(
-    typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false
-  );
+  
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [forceLandscape, setForceLandscape] = useState(false); // User override for preview/desktop
   
   // Game State
   const [gameState, setGameState] = useState<GameState>(GameState.START_MENU);
@@ -83,7 +84,10 @@ const GameCanvas: React.FC = () => {
       // Safety check for 0 dimensions to prevent blank screen
       if (w > 0 && h > 0) {
         setDimensions({ w, h });
-        setIsPortrait(h > w);
+        // Only trigger portrait mode on narrow screens (phones)
+        // This allows desktop windows to be narrow without blocking gameplay
+        const isNarrow = w < 768; 
+        setIsPortrait(isNarrow && h > w);
       }
     };
     
@@ -389,29 +393,69 @@ const GameCanvas: React.FC = () => {
     ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
     ctx.scale(p.facing, 1); 
 
-    // Head
+    // -- Drawn as Masonic Brother in Suit --
+
+    // Head (Flesh tone)
     ctx.fillStyle = '#fca5a5'; 
     ctx.beginPath(); ctx.arc(0, -16, 7, 0, Math.PI * 2); ctx.fill();
 
-    // Body
-    ctx.fillStyle = '#1e293b'; ctx.fillRect(-7, -10, 14, 20);
+    // Suit Body (Dark Navy/Black Jacket)
+    ctx.fillStyle = '#0f172a'; 
+    ctx.fillRect(-7, -10, 14, 20);
 
-    // Legs
-    ctx.fillStyle = '#0f172a'; ctx.fillRect(-6, 10, 5, 12); ctx.fillRect(1, 10, 5, 12);  
+    // White Shirt (V-Shape or Rectangle at chest)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-4, -10); ctx.lineTo(4, -10); ctx.lineTo(0, 0); 
+    ctx.fill();
 
-    // Arms
-    ctx.fillStyle = '#1e293b'; ctx.fillRect(-9, -8, 3, 14); ctx.fillRect(6, -8, 3, 14);  
+    // Black Tie
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.moveTo(-1, -10); ctx.lineTo(1, -10); ctx.lineTo(0.5, -2); ctx.lineTo(-0.5, -2);
+    ctx.fill();
 
-    // Apron
-    if (showApron) {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.moveTo(-6, -2); ctx.lineTo(6, -2); ctx.lineTo(7, 8); ctx.lineTo(-7, 8); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-6, -2); ctx.lineTo(6, -2); ctx.lineTo(0, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
-    }
+    // Legs (Trousers - Match Suit)
+    ctx.fillStyle = '#0f172a'; 
+    ctx.fillRect(-6, 10, 5, 12); ctx.fillRect(1, 10, 5, 12);  
+
+    // Arms (Sleeves - Match Suit)
+    ctx.fillStyle = '#0f172a'; 
+    ctx.fillRect(-9, -8, 3, 14); ctx.fillRect(6, -8, 3, 14);  
+
+    // Hands (Flesh tone)
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillRect(-9, 6, 3, 3); ctx.fillRect(6, 6, 3, 3);
 
     // Eyes
     ctx.fillStyle = '#000000';
-    ctx.beginPath(); ctx.arc(3, -17, 1, 0, Math.PI * 2); ctx.fill();
+    if (p.facing === 1) {
+        ctx.fillRect(2, -18, 2, 2);
+    } else {
+        ctx.fillRect(-4, -18, 2, 2);
+    }
+
+    // Apron Overlay (If equipped)
+    if (showApron) {
+        // Waist Band
+        ctx.fillStyle = '#f8fafc'; // White Leather
+        ctx.strokeStyle = '#cbd5e1'; // Subtle border
+        ctx.lineWidth = 1;
+
+        // Main Square (Skirt)
+        ctx.fillRect(-7, 0, 14, 10);
+        ctx.strokeRect(-7, 0, 14, 10);
+
+        // Flap (Triangle UP for Entered Apprentice)
+        ctx.beginPath();
+        ctx.moveTo(-7, 0);
+        ctx.lineTo(7, 0);
+        ctx.lineTo(0, -6); // Points Up
+        ctx.closePath();
+        ctx.fillStyle = '#f8fafc';
+        ctx.fill();
+        ctx.stroke();
+    }
 
     ctx.restore();
   };
@@ -799,6 +843,16 @@ const GameCanvas: React.FC = () => {
 
     return (
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 bg-[url('https://www.transparenttextures.com/patterns/dark-leather.png')] overflow-hidden p-4">
+        {/* Force Landscape Warning for Preview/Desktop */}
+        {isPortrait && !forceLandscape && (
+          <div className="absolute inset-0 z-[100] bg-slate-950/95 flex flex-col items-center justify-center text-center p-8 backdrop-blur-sm">
+             <div className="text-6xl mb-4 animate-bounce">📱🔄</div>
+             <h2 className="text-2xl font-bold text-amber-400 mb-2">Best Experience in Landscape</h2>
+             <p className="text-slate-400 mb-6">If you are on a phone, please rotate it.<br/>If you are on PC, you can continue.</p>
+             <button onClick={() => setForceLandscape(true)} className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white font-bold transition-colors">Play Anyway</button>
+          </div>
+        )}
+
         <div className="max-w-4xl w-full flex flex-col md:flex-row gap-8 bg-slate-900/80 backdrop-blur-md p-6 md:p-8 rounded-xl border-2 border-amber-600 shadow-2xl">
           <div className="flex-1 flex flex-col items-center text-center space-y-6">
              <div>
@@ -868,11 +922,13 @@ const GameCanvas: React.FC = () => {
 
   return (
     <div className="relative w-full h-full overflow-hidden no-select">
-      {isPortrait && (
+      {isPortrait && !forceLandscape && (
         <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center text-center p-8">
             <div className="text-6xl mb-4 animate-bounce">📱🔄</div>
             <h2 className="text-2xl font-bold text-amber-400 mb-2">Please Rotate Device</h2>
-            <p className="text-slate-400">This game is designed for landscape mode.</p>
+            <p className="text-slate-400 mb-6">This game is designed for landscape mode.</p>
+            {/* Added for Preview/Desktop users */}
+            <button onClick={() => setForceLandscape(true)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-slate-300 text-sm">Play Anyway (Desktop/Preview)</button>
         </div>
       )}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
