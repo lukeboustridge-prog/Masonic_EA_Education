@@ -958,35 +958,44 @@ const GameCanvas: React.FC = () => {
       {/* Game Over / Education Screen */}
       {gameState === GameState.GAME_OVER && activeQuestion && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="max-w-xl w-full bg-slate-900 border-4 border-amber-600 rounded-xl p-8 shadow-2xl flex flex-col items-center text-center">
+          <div className="
+            relative w-full max-w-xl max-h-[95vh]
+            flex flex-col items-center 
+            bg-slate-900 border-2 md:border-4 border-amber-600 rounded-xl 
+            p-4 md:p-8 
+            shadow-2xl text-center
+            overflow-y-auto
+          ">
             
-            <div className="w-20 h-20 bg-amber-900/30 rounded-full flex items-center justify-center mb-6 border-4 border-amber-500">
-                <svg className="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            <div className="shrink-0 w-14 h-14 md:w-20 md:h-20 bg-amber-900/30 rounded-full flex items-center justify-center mb-3 md:mb-6 border-2 md:border-4 border-amber-500">
+                <svg className="w-8 h-8 md:w-10 md:h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
             </div>
 
-            <h2 className="text-2xl md:text-3xl font-bold text-amber-400 mb-2 uppercase tracking-wider">
+            <h2 className="shrink-0 text-xl md:text-3xl font-bold text-amber-400 mb-2 uppercase tracking-wider leading-tight">
               Further Light Required
             </h2>
             
-            <div className="my-6 w-full text-left bg-slate-800/50 p-4 rounded border border-slate-700">
-                <p className="text-slate-400 text-sm uppercase font-bold mb-1">Question:</p>
-                <p className="text-slate-200 mb-4 font-serif">{activeQuestion.text}</p>
+            <div className="shrink-0 w-full text-left bg-slate-800/50 p-3 md:p-4 rounded border border-slate-700 my-3 md:my-6">
+                <p className="text-slate-400 text-xs md:text-sm uppercase font-bold mb-1">Question:</p>
+                <p className="text-slate-200 mb-3 md:mb-4 font-serif text-sm md:text-base leading-snug">{activeQuestion.text}</p>
                 
-                <p className="text-amber-400 text-sm uppercase font-bold mb-1">Correct Answer:</p>
-                <p className="text-white font-bold text-lg">{activeQuestion.correctAnswer}</p>
+                <p className="text-amber-400 text-xs md:text-sm uppercase font-bold mb-1">Correct Answer:</p>
+                <p className="text-white font-bold text-base md:text-lg leading-snug">{activeQuestion.correctAnswer}</p>
             </div>
             
-            <p className="text-slate-300 text-sm md:text-base mb-6 leading-relaxed italic">
+            <p className="shrink-0 text-slate-300 text-xs md:text-base mb-4 md:mb-6 leading-relaxed italic">
               "We learn through patience and perseverance. Let us return to the West Gate and try again."
             </p>
 
             <button 
               onClick={resetGame}
               className="
-                w-full md:w-auto px-8 py-3
+                shrink-0
+                w-full md:w-auto px-6 py-3 md:px-8
                 bg-amber-700 hover:bg-amber-600 
-                text-white font-bold text-lg rounded-lg 
+                text-white font-bold text-base md:text-lg rounded-lg 
                 transition-all uppercase tracking-widest shadow-lg
+                mb-2 md:mb-0
               "
             >
               Restart Level

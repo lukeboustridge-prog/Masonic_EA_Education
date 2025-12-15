@@ -115,28 +115,34 @@ export const generateSpriteUrl = (key: string): string => {
         break;
 
     case 'apron':
-        // Masonic Apron (White square with flap)
+        // Masonic Apron (Pure White Lambskin - NZ Style)
         ctx.save();
         ctx.translate(16, 16);
-        // Main body (Square)
-        rect(-10, -8, 20, 18, '#f8fafc'); // White
-        // Blue trim (Border)
-        ctx.strokeStyle = '#3b82f6'; // Blue-500
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-9, -7, 18, 16);
+        
+        // Shadow for depth
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(-8, -6, 20, 18);
+
+        // Main body (Square) - Pure White
+        rect(-10, -8, 20, 18, '#ffffff'); 
+        
+        // Subtle light grey outline for definition against dark background
+        ctx.strokeStyle = '#e2e8f0'; // slate-200
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-10, -8, 20, 18);
         
         // Flap (Triangle at top)
-        ctx.fillStyle = '#f1f5f9';
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.moveTo(-10, -8);
         ctx.lineTo(10, -8);
         ctx.lineTo(0, 0); // Flap point
         ctx.closePath();
         ctx.fill();
-        ctx.stroke(); // Blue trim
+        ctx.stroke(); // Grey outline
         
-        // Strings/Tassels
-        ctx.strokeStyle = '#f8fafc';
+        // Strings/Tassels - White
+        ctx.strokeStyle = '#f1f5f9';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(-10, -8); ctx.lineTo(-14, -6);
