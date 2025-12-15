@@ -4,7 +4,7 @@ import { BASE64_SPRITES } from './base64Assets';
 
 export const generateSpriteUrl = (key: string): string => {
   // 1. Check if a static Base64 string exists (Priority)
-  if (BASE64_SPRITES[key]) {
+  if (BASE64_SPRITES[key] && BASE64_SPRITES[key].length > 0) {
       return BASE64_SPRITES[key];
   }
 
@@ -12,84 +12,170 @@ export const generateSpriteUrl = (key: string): string => {
   if (typeof document === 'undefined') return '';
   const canvas = document.createElement('canvas');
   
-  // Pillars are tall (40x160), others are 32x32
   const isPillar = key.startsWith('pillar');
+  // 32x32 for icons, 40x160 for pillars
   canvas.width = isPillar ? 40 : 32;
   canvas.height = isPillar ? 160 : 32;
   
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
   
+  // Ensure crisp pixel art edges
   ctx.imageSmoothingEnabled = false;
-  const rect = (x: number, y: number, w: number, h: number, c: string) => {
-      ctx.fillStyle = c;
-      ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h));
-  }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Helper for Pillar Shafts
-  const drawShaft = () => {
-      rect(6, 20, 28, 130, '#e2e8f0'); // Shaft
-      ctx.fillStyle = 'rgba(0,0,0,0.1)'; // Fluting
-      rect(10, 20, 2, 130, null as any); rect(16, 20, 2, 130, null as any);
-      rect(22, 20, 2, 130, null as any); rect(28, 20, 2, 130, null as any);
-      rect(4, 150, 32, 10, '#cbd5e1'); // Base
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  // Drawing Helpers
+  const fillRect = (x: number, y: number, w: number, h: number, c: string) => { 
+      ctx.fillStyle = c; 
+      ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h)); 
   };
 
   switch(key) {
     case 'gauge': // 24 Inch Gauge
-        ctx.save(); ctx.translate(16, 16); ctx.rotate(-Math.PI / 4);
-        rect(-14, -3, 28, 6, '#d97706'); rect(-14, -3, 28, 1, '#fcd34d');
-        ctx.fillStyle = '#78350f'; for(let i=-12; i<=12; i+=4) ctx.fillRect(i, -3, 1, 3);
-        ctx.restore(); break;
-    case 'gavel': // Gavel
-        ctx.save(); ctx.translate(16, 16); ctx.rotate(-Math.PI / 4);
-        rect(-2, 0, 4, 14, '#92400e'); rect(-6, -8, 12, 8, '#94a3b8'); rect(5, -8, 1, 8, '#475569');
-        ctx.restore(); break;
+        ctx.translate(cx, cy); ctx.rotate(-Math.PI / 4);
+        // Body (Gold/Wood)
+        fillRect(-14, -4, 28, 8, '#fbbf24'); // Amber 400
+        fillRect(-14, -4, 28, 2, '#fcd34d'); // Highlight
+        fillRect(-14, 2, 28, 2, '#d97706');  // Shadow
+        // Ticks
+        ctx.fillStyle = '#78350f'; 
+        for(let i=-12; i<=12; i+=4) ctx.fillRect(i, -4, 1, 4);
+        break;
+
+    case 'gavel': // Common Gavel
+        ctx.translate(cx, cy); ctx.rotate(-Math.PI / 4);
+        // Handle (Dark Wood)
+        fillRect(-2, 0, 4, 14, '#78350f'); 
+        // Head (Stone/Iron)
+        fillRect(-8, -10, 16, 10, '#475569'); // Slate 600
+        fillRect(-8, -10, 16, 2, '#64748b');  // Highlight
+        // Detail bands
+        fillRect(-6, -10, 1, 10, '#334155'); 
+        fillRect(5, -10, 1, 10, '#334155'); 
+        break;
+
     case 'chisel': // Chisel
-        ctx.save(); ctx.translate(16, 16); ctx.rotate(Math.PI / 4); 
-        rect(-2, -8, 4, 8, '#78350f'); rect(-2, 0, 4, 12, '#cbd5e1'); 
-        ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(-2, 12); ctx.lineTo(2, 12); ctx.lineTo(0, 15); ctx.fill();
-        ctx.restore(); break;
+        ctx.translate(cx, cy); ctx.rotate(Math.PI / 4);
+        // Handle
+        fillRect(-2, -10, 4, 10, '#78350f'); 
+        // Blade (Steel)
+        fillRect(-2, 0, 4, 12, '#94a3b8'); 
+        // Beveled Edge
+        ctx.beginPath(); ctx.moveTo(-2, 12); ctx.lineTo(2, 12); ctx.lineTo(0, 15); 
+        ctx.fillStyle = '#cbd5e1'; ctx.fill();
+        break;
+
     case 'rough_ashlar': // Rough Ashlar
-        rect(6, 8, 20, 18, '#64748b'); rect(8, 10, 4, 4, '#475569'); rect(7, 7, 2, 2, '#94a3b8');
+        // Base Block
+        fillRect(4, 8, 24, 20, '#475569'); 
+        // Rough Texture details
+        ctx.fillStyle = '#1e293b'; // Dark cracks
+        ctx.beginPath(); ctx.moveTo(4, 8); ctx.lineTo(10, 12); ctx.lineTo(4, 16); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(28, 28); ctx.lineTo(22, 24); ctx.lineTo(28, 20); ctx.fill();
+        // Highlight Edge
+        fillRect(6, 8, 18, 2, '#64748b');
         break;
+
     case 'perfect_ashlar': // Perfect Ashlar
-        rect(7, 7, 18, 18, '#cbd5e1'); rect(7, 7, 18, 1, '#f8fafc'); rect(7, 24, 18, 1, '#475569');
-        rect(14, 5, 4, 2, '#334155'); // Hook
+        // Cube
+        fillRect(6, 8, 20, 20, '#cbd5e1'); 
+        // Outline
+        ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1;
+        ctx.strokeRect(6.5, 8.5, 19, 19);
+        // Lewis (Hook) on top
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(14, 4, 4, 4); // Base of hook
+        ctx.beginPath(); ctx.arc(16, 4, 3, Math.PI, 0); ctx.stroke(); // Loop
         break;
-    case 'ladder': // Ladder
-        rect(9, 2, 3, 28, '#854d0e'); rect(20, 2, 3, 28, '#854d0e');
-        for(let y=6; y<28; y+=5) rect(9, y, 14, 2, '#ca8a04');
+
+    case 'ladder': // Jacob's Ladder
+        // Rails
+        fillRect(8, 2, 3, 28, '#854d0e'); 
+        fillRect(21, 2, 3, 28, '#854d0e');
+        // Rungs
+        ctx.fillStyle = '#ca8a04';
+        for(let y=6; y<28; y+=6) fillRect(8, y, 16, 2, '#ca8a04');
         break;
-    case 'apron': // Apron
-        ctx.save(); ctx.translate(16, 16);
-        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(-8, -6, 20, 18);
-        rect(-10, -8, 20, 18, '#ffffff'); ctx.strokeRect(-10, -8, 20, 18);
-        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(-10, -8); ctx.lineTo(10, -8); ctx.lineTo(0, 0); ctx.fill(); ctx.stroke();
-        ctx.restore(); break;
-    case 'square_compass': // Checkpoint
-        ctx.save(); ctx.translate(16, 16);
-        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-10, -4); ctx.lineTo(0, 6); ctx.lineTo(10, -4); ctx.stroke();
-        ctx.strokeStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(-8, 10); ctx.moveTo(0, -10); ctx.lineTo(8, 10); ctx.stroke();
-        ctx.restore(); break;
+
+    case 'apron': // Masonic Apron
+        ctx.translate(cx, cy);
+        // Main Body (White)
+        ctx.fillStyle = '#f8fafc'; 
+        ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowBlur = 4;
+        ctx.fillRect(-10, -8, 20, 16);
+        ctx.shadowBlur = 0;
+        // Border (Subtle Grey for EA)
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+        ctx.strokeRect(-10.5, -8.5, 20, 16);
+        // Flap (Triangle Up for Entered Apprentice)
+        ctx.beginPath(); ctx.moveTo(-10, -8); ctx.lineTo(0, -18); ctx.lineTo(10, -8); 
+        ctx.fillStyle = '#f1f5f9'; ctx.fill(); ctx.stroke();
+        // Strings
+        ctx.beginPath(); ctx.moveTo(-10, -8); ctx.lineTo(-14, -4);
+        ctx.moveTo(10, -8); ctx.lineTo(14, -4);
+        ctx.strokeStyle = '#f8fafc'; ctx.stroke();
+        break;
+
+    case 'square_compass': // Logo/Checkpoint
+        ctx.translate(cx, cy);
+        // Compass (Points Down) - Gold
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(-8, 9); ctx.lineTo(0, -9); ctx.lineTo(8, 9); ctx.stroke();
+        // Square (Angle Down) - Silver/Steel
+        ctx.strokeStyle = '#cbd5e1'; 
+        ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(0, 6); ctx.lineTo(10, -3); ctx.stroke();
+        // "G"
+        ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 12px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('G', 0, 1);
+        break;
+
     case 'pillar_ionic': // Wisdom
-        drawShaft();
-        rect(2, 5, 36, 15, '#cbd5e1'); // Capital
-        ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(8, 10, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(32, 10, 6, 0, Math.PI*2); ctx.fill();
+        // Base
+        fillRect(4, 140, 32, 20, '#cbd5e1');
+        // Shaft (Gradient)
+        const gI = ctx.createLinearGradient(6,0,34,0);
+        gI.addColorStop(0, '#94a3b8'); gI.addColorStop(0.5, '#f1f5f9'); gI.addColorStop(1, '#94a3b8');
+        ctx.fillStyle = gI; ctx.fillRect(6, 25, 28, 115);
+        // Capital (Volutes/Scrolls)
+        fillRect(2, 10, 36, 15, '#cbd5e1');
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath(); ctx.arc(10, 18, 5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(30, 18, 5, 0, Math.PI*2); ctx.fill();
         break;
+
     case 'pillar_doric': // Strength
-        drawShaft();
-        rect(2, 10, 36, 10, '#94a3b8'); rect(0, 0, 40, 10, '#cbd5e1');
+        // Base
+        fillRect(4, 140, 32, 20, '#cbd5e1');
+        // Shaft
+        const gD = ctx.createLinearGradient(6,0,34,0);
+        gD.addColorStop(0, '#94a3b8'); gD.addColorStop(0.5, '#f1f5f9'); gD.addColorStop(1, '#94a3b8');
+        ctx.fillStyle = gD; ctx.fillRect(6, 20, 28, 120);
+        // Capital (Simple Slab)
+        fillRect(2, 10, 36, 10, '#cbd5e1');
+        fillRect(4, 20, 32, 5, '#94a3b8');
         break;
+
     case 'pillar_corinthian': // Beauty
-        drawShaft();
-        rect(4, 5, 32, 20, '#cbd5e1');
-        ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(10, 20, 4, 0, Math.PI, true); ctx.fill(); ctx.beginPath(); ctx.arc(30, 20, 4, 0, Math.PI, true); ctx.fill();
-        rect(0, 0, 40, 5, '#e2e8f0');
+        // Base
+        fillRect(4, 140, 32, 20, '#cbd5e1');
+        // Shaft
+        const gC = ctx.createLinearGradient(6,0,34,0);
+        gC.addColorStop(0, '#94a3b8'); gC.addColorStop(0.5, '#f1f5f9'); gC.addColorStop(1, '#94a3b8');
+        ctx.fillStyle = gC; ctx.fillRect(6, 35, 28, 105);
+        // Capital (Ornate Leaves)
+        fillRect(4, 5, 32, 30, '#cbd5e1');
+        ctx.fillStyle = '#64748b'; // Leaf details
+        ctx.beginPath(); ctx.moveTo(4, 35); ctx.lineTo(4, 15); ctx.lineTo(10, 25); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(36, 35); ctx.lineTo(36, 15); ctx.lineTo(30, 25); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(18, 35); ctx.lineTo(20, 15); ctx.lineTo(22, 35); ctx.fill();
         break;
+        
     default:
-        rect(0,0,32,32,'#ef4444'); break;
+        fillRect(0,0,32,32,'#ef4444'); 
   }
+
   return canvas.toDataURL();
 };
