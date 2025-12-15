@@ -1,4 +1,4 @@
-import { Question, Platform, Orb } from './types';
+import { Question, Platform, Orb, OrbDefinition } from './types';
 
 // Physics Tweaks for "Smoother" feel
 // Lower gravity and jump force makes the jump arc slower and easier to control
@@ -210,25 +210,62 @@ export const PLATFORM_DATA = [
   { x: 7900, yOffset: -150, width: 50, height: 150, color: '#cbd5e1' },
 ];
 
-export const ORB_DATA = [
-  // Section 1
-  { id: 1, x: 875, yOffset: -300, radius: 20, questionId: 1 }, 
-  // Section 2
-  { id: 2, x: 1450, yOffset: -630, radius: 20, questionId: 2 },
-  // Section 3
-  { id: 3, x: 2550, yOffset: -250, radius: 20, questionId: 3 },
-  // Section 4 (Mines)
-  { id: 4, x: 3700, yOffset: 300, radius: 20, questionId: 4 },
-  // Section 5
-  { id: 5, x: 4640, yOffset: -200, radius: 20, questionId: 5 },
-  // Section 6 (Peak)
-  { id: 6, x: 5350, yOffset: -800, radius: 20, questionId: 6 },
-  // Section 7
-  { id: 7, x: 6050, yOffset: -550, radius: 20, questionId: 7 },
-  { id: 8, x: 6650, yOffset: -350, radius: 20, questionId: 8 },
-  // Section 8
-  { id: 9, x: 7275, yOffset: -200, radius: 20, questionId: 9 },
-  { id: 10, x: 7575, yOffset: -300, radius: 20, questionId: 10 },
+export const GOAL_X = 7800;
+
+// Working Tools Data
+const TOOLS = [
+  {
+    name: "24 Inch Gauge",
+    spriteKey: "gauge",
+    blurb: "The 24 Inch Gauge represents the 24 hours of the day, teaching us to divide our time into prayer, labor, refreshment, and sleep."
+  },
+  {
+    name: "Common Gavel",
+    spriteKey: "gavel",
+    blurb: "The Common Gavel represents the force of conscience, used to knock off all superfluous knobs and excrescences from the rude material."
+  },
+  {
+    name: "Chisel",
+    spriteKey: "chisel",
+    blurb: "The Chisel points out to us the advantages of education, by which means alone we are rendered fit members of regularly organised society."
+  },
+  {
+    name: "Rough Ashlar",
+    spriteKey: "rough_ashlar",
+    blurb: "The Rough Ashlar represents man in his infant or primitive state, rough and unpolished, until by education his mind becomes cultivated."
+  },
+  {
+    name: "Perfect Ashlar",
+    spriteKey: "perfect_ashlar",
+    blurb: "The Perfect Ashlar is a stone of a true die or square, representing the mind of man in the decline of his years, after a life well spent."
+  },
+  {
+    name: "Jacob's Ladder",
+    spriteKey: "ladder",
+    blurb: "Jacob's Ladder represents the moral virtues, principally Faith, Hope, and Charity, reaching to the heavens."
+  }
 ];
 
-export const GOAL_X = 7800;
+// Helper to assign tools to orbs cyclically
+const getTool = (index: number) => TOOLS[index % TOOLS.length];
+
+export const ORB_DATA: OrbDefinition[] = [
+  // Section 1
+  { id: 1, x: 875, yOffset: -300, radius: 20, questionId: 1, ...getTool(0) }, 
+  // Section 2
+  { id: 2, x: 1450, yOffset: -630, radius: 20, questionId: 2, ...getTool(1) },
+  // Section 3
+  { id: 3, x: 2550, yOffset: -250, radius: 20, questionId: 3, ...getTool(2) },
+  // Section 4 (Mines)
+  { id: 4, x: 3700, yOffset: 300, radius: 20, questionId: 4, ...getTool(3) },
+  // Section 5
+  { id: 5, x: 4640, yOffset: -200, radius: 20, questionId: 5, ...getTool(4) },
+  // Section 6 (Peak)
+  { id: 6, x: 5350, yOffset: -800, radius: 20, questionId: 6, ...getTool(5) },
+  // Section 7
+  { id: 7, x: 6050, yOffset: -550, radius: 20, questionId: 7, ...getTool(0) },
+  { id: 8, x: 6650, yOffset: -350, radius: 20, questionId: 8, ...getTool(1) },
+  // Section 8
+  { id: 9, x: 7275, yOffset: -200, radius: 20, questionId: 9, ...getTool(2) },
+  { id: 10, x: 7575, yOffset: -300, radius: 20, questionId: 10, ...getTool(3) },
+];

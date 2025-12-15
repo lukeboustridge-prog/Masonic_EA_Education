@@ -6,6 +6,7 @@ import {
   DESIGN_HEIGHT, CHECKPOINTS
 } from '../constants';
 import QuizModal from './QuizModal';
+import LoreModal from './LoreModal';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,6 +18,7 @@ const GameCanvas: React.FC = () => {
   // Game State
   const [gameState, setGameState] = useState<GameState>(GameState.PLAYING);
   const [score, setScore] = useState(0);
+  const [activeOrb, setActiveOrb] = useState<Orb | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
 
   // Mutable Game State
@@ -40,6 +42,9 @@ const GameCanvas: React.FC = () => {
   const cameraRef = useRef({ x: 0, y: 0 });
   const animationFrameRef = useRef<number>(0);
   const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Asset Loading
+  const spritesRef = useRef<Record<string, HTMLImageElement>>({});
 
   // --- Initialization & Resize ---
   useEffect(() => {
@@ -68,8 +73,18 @@ const GameCanvas: React.FC = () => {
     }
   }, []);
 
+  // Preload Sprites
+  useEffect(() => {
+    const uniqueKeys = Array.from(new Set(ORB_DATA.map(o => o.spriteKey)));
+    uniqueKeys.forEach(key => {
+        const img = new Image();
+        img.src = `/sprites/${key}.png`;
+        spritesRef.current[key] = img;
+    });
+  }, []);
+
   // --- Sound ---
-  const playSound = (type: 'jump' | 'collect' | 'error' | 'win') => {
+  const playSound = (type: 'jump' | 'collect' | 'error' | 'win' | 'lore') => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
@@ -98,6 +113,21 @@ const GameCanvas: React.FC = () => {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
       osc.start(now);
       osc.stop(now + 0.2);
+    } else if (type === 'lore') {
+      // Mystical chord
+      const freqs = [330, 440, 554]; // A Major
+      freqs.forEach(f => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.type = 'sine';
+          o.frequency.value = f;
+          g.gain.setValueAtTime(0.05, now);
+          g.gain.linearRampToValueAtTime(0, now + 1.0);
+          o.start(now);
+          o.stop(now + 1.0);
+      });
     } else if (type === 'error') {
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(100, now);
@@ -435,8 +465,7 @@ const GameCanvas: React.FC = () => {
       ...o,
       x: o.x,
       y: groundRefY + o.yOffset,
-      active: !orbsStateRef.current.has(o.id),
-      questionId: o.questionId
+      active: !orbsStateRef.current.has(o.id)
     }));
 
     // --- PHYSICS ---
@@ -543,18 +572,22 @@ const GameCanvas: React.FC = () => {
       return; 
     }
 
-    // Orb Collision
+    // Orb Collision (Working Tools)
     for (const orb of orbs) {
       if (!orb.active) continue;
       const dx = (player.x + player.width / 2) - orb.x;
       const dy = (player.y + player.height / 2) - orb.y;
-      if (Math.sqrt(dx * dx + dy * dy) < orb.radius + player.width / 2) {
-        const question = QUESTIONS.find(q => q.id === orb.questionId);
-        if (question) {
-          setActiveQuestion(question);
-          setGameState(GameState.QUIZ);
-          return;
-        }
+      // Increased collision radius slightly for tools
+      if (Math.sqrt(dx * dx + dy * dy) < orb.radius + player.width / 2 + 10) {
+        setActiveOrb(orb);
+        setGameState(GameState.LORE); // Go to LORE first
+        playSound('lore');
+        
+        // Stop movement
+        playerRef.current.vx = 0;
+        keysRef.current = {};
+        
+        return;
       }
     }
 
@@ -617,18 +650,37 @@ const GameCanvas: React.FC = () => {
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
-    // Draw Orbs
+    // Draw Orbs (Now Sprites)
     orbs.forEach(orb => {
       if (!orb.active) return;
-      ctx.beginPath();
-      ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#22d3ee';
-      ctx.fill();
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = '#22d3ee';
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.closePath();
+      
+      const img = spritesRef.current[orb.spriteKey];
+      const size = 40; // 40px sprite size
+      
+      if (img && img.complete && img.naturalHeight !== 0) {
+          // Draw loaded sprite
+          // Draw Glow
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#fbbf24'; // Amber glow for tools
+          ctx.drawImage(img, orb.x - size/2, orb.y - size/2, size, size);
+          ctx.shadowBlur = 0;
+      } else {
+          // Fallback: Draw Amber Circle with Letter if image missing
+          ctx.beginPath();
+          ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fill();
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#f59e0b';
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = 'black';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(orb.name[0], orb.x, orb.y);
+          ctx.closePath();
+      }
     });
 
     // Draw Player Sprite
@@ -675,11 +727,26 @@ const GameCanvas: React.FC = () => {
     setGameState(GameState.PLAYING);
   };
 
+  // Lore Handler
+  const handleLoreContinue = () => {
+      if (activeOrb) {
+        const question = QUESTIONS.find(q => q.id === activeOrb.questionId);
+        if (question) {
+            setActiveQuestion(question);
+            setGameState(GameState.QUIZ);
+        } else {
+            // Fallback if no question found, just collect
+            handleCorrectAnswer();
+        }
+      }
+  };
+
   // Quiz Handlers
   const handleCorrectAnswer = () => {
     playSound('collect');
     setScore(s => s + 100);
-    if (activeQuestion) orbsStateRef.current.add(activeQuestion.id);
+    if (activeOrb) orbsStateRef.current.add(activeOrb.id);
+    setActiveOrb(null);
     setActiveQuestion(null);
 
     // CRITICAL FIX: Reset keys and velocity so player doesn't auto-run after quiz
@@ -776,6 +843,14 @@ const GameCanvas: React.FC = () => {
                 </div>
             </div>
         </div>
+      )}
+
+      {/* Lore Modal */}
+      {gameState === GameState.LORE && activeOrb && (
+        <LoreModal 
+          orb={activeOrb}
+          onNext={handleLoreContinue}
+        />
       )}
 
       {/* Quiz Modal */}

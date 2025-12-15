@@ -33,10 +33,26 @@ export interface Orb {
   radius: number;
   active: boolean;
   questionId: number;
+  // New Lore Fields
+  name: string;
+  spriteKey: string;
+  blurb: string;
+}
+
+export interface OrbDefinition {
+  id: number;
+  x: number;
+  yOffset: number;
+  radius: number;
+  questionId: number;
+  name: string;
+  spriteKey: string;
+  blurb: string;
 }
 
 export enum GameState {
   PLAYING,
+  LORE,
   QUIZ,
   GAME_OVER,
   VICTORY
