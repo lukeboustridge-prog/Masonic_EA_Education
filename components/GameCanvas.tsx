@@ -12,7 +12,7 @@ import { generateSpriteUrl } from '../utils/assetGenerator';
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Dimensions state - Initialize safely for SSR/Window
+  // Dimensions state - Initialize safely for SSR/Window to prevent 0x0
   const [dimensions, setDimensions] = useState({ 
     w: typeof window !== 'undefined' ? window.innerWidth : 800, 
     h: typeof window !== 'undefined' ? window.innerHeight : 600 
@@ -80,7 +80,7 @@ const GameCanvas: React.FC = () => {
     const handleResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      // Safety check for 0 dimensions
+      // Safety check for 0 dimensions to prevent blank screen
       if (w > 0 && h > 0) {
         setDimensions({ w, h });
         setIsPortrait(h > w);
@@ -201,7 +201,7 @@ const GameCanvas: React.FC = () => {
     const ctx = audioContextRef.current;
     if (!ctx) return;
     
-    // Resume if suspended (PC requirement)
+    // Resume if suspended (PC/Browser requirement)
     if (ctx.state === 'suspended') {
       ctx.resume().catch(() => {});
     }
@@ -333,6 +333,23 @@ const GameCanvas: React.FC = () => {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
+
+  // Input Handler for both Touch and Mouse
+  const handleInputStart = (key: string) => (e: React.TouchEvent | React.MouseEvent) => {
+    // We prevent default to stop things like text selection or scrolling,
+    // but we check if cancelable (especially important for touch events)
+    if (e.cancelable) e.preventDefault();
+    
+    enterFullscreen();
+    if (key === 'Space') executeJump();
+    keysRef.current[key] = true;
+  };
+
+  const handleInputEnd = (key: string) => (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    keysRef.current[key] = false;
+    if (key === 'Space' && playerRef.current.vy < 0) playerRef.current.vy *= 0.5;
+  };
 
   // --- DRAWING HELPERS ---
 
@@ -480,6 +497,7 @@ const GameCanvas: React.FC = () => {
   const gameLoop = useCallback(() => {
     if (gameState !== GameState.PLAYING) return;
 
+    // Safety Try-Catch for Render Loop
     try {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -753,19 +771,6 @@ const GameCanvas: React.FC = () => {
     playSound('error');
     saveScoreToLeaderboard(score, false);
     setGameState(GameState.GAME_OVER);
-  };
-
-  const handleInputStart = (key: string) => (e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault(); 
-    enterFullscreen();
-    if (key === 'Space') executeJump();
-    keysRef.current[key] = true;
-  };
-
-  const handleInputEnd = (key: string) => (e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault();
-    keysRef.current[key] = false;
-    if (key === 'Space' && playerRef.current.vy < 0) playerRef.current.vy *= 0.5;
   };
 
   const startGame = () => {

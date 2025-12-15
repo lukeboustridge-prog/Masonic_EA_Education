@@ -4,7 +4,7 @@ import { BASE64_SPRITES } from './base64Assets';
 
 export const generateSpriteUrl = (key: string): string => {
   // 1. Check if a static Base64 string exists (Priority)
-  if (BASE64_SPRITES[key] && BASE64_SPRITES[key].length > 0) {
+  if (BASE64_SPRITES[key]) {
       return BASE64_SPRITES[key];
   }
 
