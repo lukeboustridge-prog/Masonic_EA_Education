@@ -446,11 +446,11 @@ const GameCanvas: React.FC = () => {
         ctx.fillRect(-7, 0, 14, 10);
         ctx.strokeRect(-7, 0, 14, 10);
 
-        // Flap (Triangle UP for Entered Apprentice)
+        // Flap (Triangle DOWN for NZ Style)
         ctx.beginPath();
         ctx.moveTo(-7, 0);
         ctx.lineTo(7, 0);
-        ctx.lineTo(0, -6); // Points Up
+        ctx.lineTo(0, 5); // Points Down
         ctx.closePath();
         ctx.fillStyle = '#f8fafc';
         ctx.fill();

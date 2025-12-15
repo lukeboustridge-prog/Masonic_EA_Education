@@ -135,12 +135,11 @@ export const generateSpriteUrl = (key: string): string => {
         ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
         ctx.strokeRect(-11, -8, 22, 18);
 
-        // Flap (Triangle Up for EA)
-        // A distinct triangular flap standing up from the waistline
+        // Flap (Triangle DOWN for NZ Style)
         ctx.beginPath(); 
         ctx.moveTo(-11, -8); 
         ctx.lineTo(11, -8); 
-        ctx.lineTo(0, -18); 
+        ctx.lineTo(0, 2); // Points Down into the apron body
         ctx.closePath();
         ctx.fillStyle = '#ffffff'; 
         ctx.fill(); 
