@@ -2,15 +2,16 @@ import { Question, Platform, Orb } from './types';
 
 // Physics Tweaks for "Smoother" feel
 // Lower gravity and jump force makes the jump arc slower and easier to control
-export const GRAVITY = 0.5; 
+export const GRAVITY = 0.4; 
 export const FRICTION = 0.82; // Slightly more friction for tighter stopping
 export const MOVE_SPEED = 5.0; // Slightly faster to compensate for longer air time
-export const JUMP_FORCE = -13; 
+export const JUMP_FORCE = -11; 
 
 export const WORLD_WIDTH = 8000; 
 
 // Logical height for Scale-to-Fit
-export const DESIGN_HEIGHT = 640;
+// Reduced from 640 to 420 to zoom in the camera for better mobile visibility
+export const DESIGN_HEIGHT = 420;
 
 export const QUESTIONS: Question[] = [
   {

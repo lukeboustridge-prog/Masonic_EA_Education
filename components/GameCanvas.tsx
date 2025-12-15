@@ -724,7 +724,7 @@ const GameCanvas: React.FC = () => {
 
       {/* Touch Controls Overlay */}
       {gameState === GameState.PLAYING && (
-        <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-end pb-4 px-4 lg:hidden">
+        <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-end pb-4 px-4">
             <div className="flex justify-between items-end w-full select-none mb-2">
                 {/* D-Pad (Larger for mobile) */}
                 <div className="flex gap-4 pointer-events-auto">
