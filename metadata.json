@@ -1,0 +1,5 @@
+{
+  "name": "Masonic Knowledge Platformer",
+  "description": "A 2D platformer game where the player collects Knowledge Orbs and answers EA Degree questions to progress.",
+  "requestFramePermissions": []
+}
