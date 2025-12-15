@@ -3,7 +3,7 @@ import { GameState, Player, Orb, Platform, Question } from '../types';
 import { 
   GRAVITY, FRICTION, MOVE_SPEED, JUMP_FORCE, 
   WORLD_WIDTH, PLATFORM_DATA, ORB_DATA, GOAL_X, QUESTIONS,
-  DESIGN_HEIGHT
+  DESIGN_HEIGHT, CHECKPOINTS
 } from '../constants';
 import QuizModal from './QuizModal';
 
@@ -32,6 +32,9 @@ const GameCanvas: React.FC = () => {
   const keysRef = useRef<{ [key: string]: boolean }>({});
   
   const orbsStateRef = useRef<Set<number>>(new Set()); // IDs of inactive orbs
+  
+  // Checkpoint State
+  const lastCheckpointRef = useRef({ x: 50, y: DESIGN_HEIGHT - 100 });
   
   // Camera now tracks X and Y
   const cameraRef = useRef({ x: 0, y: 0 });
@@ -462,18 +465,27 @@ const GameCanvas: React.FC = () => {
     player.vy += GRAVITY;
     player.y += player.vy;
 
+    // Checkpoints Update
+    for (const cpX of CHECKPOINTS) {
+        if (player.x > cpX && cpX > lastCheckpointRef.current.x) {
+            // Update last checkpoint
+            lastCheckpointRef.current = { x: cpX + 50, y: groundRefY - 100 };
+        }
+    }
+
     // World Boundary Checks
     if (player.x < 0) { player.x = 0; player.vx = 0; }
     if (player.x > WORLD_WIDTH - player.width) { player.x = WORLD_WIDTH - player.width; player.vx = 0; }
     
     // Pit Death (using absolute world coord roughly)
     if (player.y > groundRefY + 600) { 
-      player.x = 50;
-      player.y = groundRefY - 100;
+      // Respawn at Checkpoint
+      player.x = lastCheckpointRef.current.x;
+      player.y = lastCheckpointRef.current.y;
+      player.vx = 0;
       player.vy = 0;
       player.jumpCount = 0;
       player.coyoteTimer = 0;
-      cameraRef.current.y = 0; 
       playSound('error');
     }
 
@@ -645,19 +657,6 @@ const GameCanvas: React.FC = () => {
     return () => cancelAnimationFrame(animationFrameRef.current);
   }, [gameState, gameLoop]);
 
-  // Quiz Handlers
-  const handleCorrectAnswer = () => {
-    playSound('collect');
-    setScore(s => s + 100);
-    if (activeQuestion) orbsStateRef.current.add(activeQuestion.id);
-    setActiveQuestion(null);
-    setGameState(GameState.PLAYING);
-  };
-
-  const handleIncorrectAnswer = () => {
-    playSound('error');
-  };
-
   const resetGame = () => {
     playerRef.current = { 
         x: 50, y: DESIGN_HEIGHT - 100, width: 30, height: 45, 
@@ -671,8 +670,29 @@ const GameCanvas: React.FC = () => {
     keysRef.current = {};
     orbsStateRef.current.clear();
     setScore(0);
+    lastCheckpointRef.current = { x: 50, y: DESIGN_HEIGHT - 100 }; // Reset checkpoint to start
     cameraRef.current = { x: 0, y: 0 };
     setGameState(GameState.PLAYING);
+  };
+
+  // Quiz Handlers
+  const handleCorrectAnswer = () => {
+    playSound('collect');
+    setScore(s => s + 100);
+    if (activeQuestion) orbsStateRef.current.add(activeQuestion.id);
+    setActiveQuestion(null);
+
+    // Fix: Reset keys and velocity so player doesn't auto-run after quiz
+    keysRef.current = {};
+    playerRef.current.vx = 0;
+
+    setGameState(GameState.PLAYING);
+  };
+
+  const handleIncorrectAnswer = () => {
+    playSound('error');
+    // Hardcore Mode: Reset entire game on wrong answer
+    resetGame();
   };
 
   // Touch Handlers
@@ -707,8 +727,8 @@ const GameCanvas: React.FC = () => {
 
       {/* HUD */}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
-        <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm">
-          <h1 className="text-sm md:text-xl font-bold text-slate-100">Masonic Platformer</h1>
+        <div className="px-4 py-2">
+          {/* Title removed for clean UI */}
         </div>
         <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm">
           <span className="text-cyan-400 font-mono text-xl">{score}</span>

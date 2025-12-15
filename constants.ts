@@ -10,8 +10,10 @@ export const JUMP_FORCE = -11;
 export const WORLD_WIDTH = 8000; 
 
 // Logical height for Scale-to-Fit
-// Reduced from 640 to 420 to zoom in the camera for better mobile visibility
-export const DESIGN_HEIGHT = 420;
+// Reduced to 360 to zoom in the camera for better mobile visibility
+export const DESIGN_HEIGHT = 360;
+
+export const CHECKPOINTS = [0, 1200, 2150, 3000, 4300, 5100, 6900];
 
 export const QUESTIONS: Question[] = [
   {
@@ -209,14 +211,24 @@ export const PLATFORM_DATA = [
 ];
 
 export const ORB_DATA = [
-  { id: 1, x: 875, yOffset: -300, radius: 15, questionId: 1 },
-  { id: 2, x: 1450, yOffset: -630, radius: 15, questionId: 2 },
-  { id: 3, x: 2750, yOffset: -150, radius: 15, questionId: 3 },
-  { id: 4, x: 3700, yOffset: 200, radius: 15, questionId: 4 },
-  { id: 5, x: 4640, yOffset: -200, radius: 15, questionId: 5 },
-  { id: 6, x: 5350, yOffset: -800, radius: 15, questionId: 6 },
-  { id: 7, x: 6350, yOffset: -450, radius: 15, questionId: 7 },
-  { id: 8, x: 7275, yOffset: -300, radius: 15, questionId: 8 },
+  // Section 1
+  { id: 1, x: 875, yOffset: -300, radius: 20, questionId: 1 }, 
+  // Section 2
+  { id: 2, x: 1450, yOffset: -630, radius: 20, questionId: 2 },
+  // Section 3
+  { id: 3, x: 2550, yOffset: -250, radius: 20, questionId: 3 },
+  // Section 4 (Mines)
+  { id: 4, x: 3700, yOffset: 300, radius: 20, questionId: 4 },
+  // Section 5
+  { id: 5, x: 4640, yOffset: -200, radius: 20, questionId: 5 },
+  // Section 6 (Peak)
+  { id: 6, x: 5350, yOffset: -800, radius: 20, questionId: 6 },
+  // Section 7
+  { id: 7, x: 6050, yOffset: -550, radius: 20, questionId: 7 },
+  { id: 8, x: 6650, yOffset: -350, radius: 20, questionId: 8 },
+  // Section 8
+  { id: 9, x: 7275, yOffset: -200, radius: 20, questionId: 9 },
+  { id: 10, x: 7575, yOffset: -300, radius: 20, questionId: 10 },
 ];
 
 export const GOAL_X = 7800;
