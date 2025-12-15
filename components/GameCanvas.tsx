@@ -26,6 +26,9 @@ const GameCanvas: React.FC = () => {
   // Player Progression State
   const [hasApron, setHasApron] = useState(false);
 
+  // Standalone Mode State
+  const [isStandalone, setIsStandalone] = useState(false);
+
   // Mutable Game State
   const playerRef = useRef<Player>({
     x: 50, y: 0, width: 30, height: 45, 
@@ -72,6 +75,16 @@ const GameCanvas: React.FC = () => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // --- Standalone Mode Detection ---
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isStandaloneQuery = window.matchMedia('(display-mode: standalone)').matches;
+      const isIOSStandalone = (window.navigator as any).standalone === true;
+      setIsStandalone(isStandaloneQuery || isIOSStandalone);
+    };
+    checkStandalone();
   }, []);
 
   // Initialize player Y when dimensions change
@@ -183,6 +196,22 @@ const GameCanvas: React.FC = () => {
       }
     } catch (e) {
       // Ignore errors (iOS Safari throws here often)
+    }
+  };
+
+  const toggleFullscreen = () => {
+    try {
+      if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+        const docEl = document.documentElement as any;
+        const request = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+        if (request) request.call(docEl).catch((e: any) => console.log(e));
+      } else {
+        const exit = document.exitFullscreen || (document as any).webkitExitFullscreen;
+        if (exit) exit.call(document).catch((e: any) => console.log(e));
+      }
+    } catch (e) {
+      // iOS Safari usually doesn't support this API
+      console.log('Fullscreen API not supported');
     }
   };
 
@@ -981,8 +1010,18 @@ const GameCanvas: React.FC = () => {
 
       {/* HUD */}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
-        <div className="px-4 py-2">
-          {/* Title removed for clean UI */}
+        <div className="px-4 py-2 pointer-events-auto">
+          {!isStandalone && (
+            <button 
+              onClick={toggleFullscreen}
+              className="bg-slate-800/80 p-2 rounded-lg border border-slate-600 backdrop-blur-sm text-slate-300 hover:text-white hover:bg-slate-700 transition-all active:scale-95"
+              title="Toggle Fullscreen"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+          )}
         </div>
         <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm flex items-center gap-3">
           {hasApron && (
