@@ -8,6 +8,7 @@ import {
 import QuizModal from './QuizModal';
 import LoreModal from './LoreModal';
 import { generateSpriteUrl } from '../utils/assetGenerator';
+import { fetchLeaderboard, submitScore } from '../api/leaderboard';
 
 const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -81,34 +82,27 @@ const GameCanvas: React.FC = () => {
 
   // Load Leaderboard on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('apprentice_leaderboard');
-      if (stored) {
-        setLeaderboard(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error('Failed to load leaderboard', e);
-    }
+    const loadLeaderboard = async () => {
+      setIsLoadingLeaderboard(true);
+      const data = await fetchLeaderboard();
+      setLeaderboard(data);
+      setIsLoadingLeaderboard(false);
+    };
+    loadLeaderboard();
   }, []);
 
-  const saveScoreToLeaderboard = (finalScore: number, completed: boolean) => {
-    const entry: LeaderboardEntry = {
-      id: Date.now().toString(),
-      name: playerName.trim() || 'Anonymous',
-      score: finalScore,
-      date: Date.now(),
-      completed
-    };
-
-    setLeaderboard(prev => {
-      const updated = [...prev, entry];
-      try {
-        localStorage.setItem('apprentice_leaderboard', JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to save leaderboard', e);
-      }
-      return updated;
-    });
+  // Updated to use Supabase API
+  const saveScoreToLeaderboard = async (finalScore: number, completed: boolean) => {
+    const name = playerName.trim() || 'Anonymous';
+    
+    // Submit to Supabase
+    await submitScore(name, finalScore, completed);
+    
+    // Refresh local leaderboard display
+    setIsLoadingLeaderboard(true);
+    const updatedData = await fetchLeaderboard();
+    setLeaderboard(updatedData);
+    setIsLoadingLeaderboard(false);
   };
 
   // --- Initialization & Resize ---
@@ -322,7 +316,7 @@ const GameCanvas: React.FC = () => {
   };
 
   // --- DRAWING HELPERS ---
-
+  // (Helpers omitted for brevity, they remain unchanged)
   const drawStoneBlock = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) => {
     ctx.fillStyle = '#cbd5e1'; 
     ctx.fillRect(x, y, w, h);
@@ -531,7 +525,6 @@ const GameCanvas: React.FC = () => {
     ctx.restore();
   };
 
-  // Draw the Worshipful Master NPC (NZ Style)
   const drawMaster = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
     ctx.save();
     ctx.translate(x, y);
@@ -618,7 +611,6 @@ const GameCanvas: React.FC = () => {
     ctx.restore();
   };
 
-  // Draw the Junior Warden NPC (MM Apron, Plumb Rule)
   const drawJuniorWarden = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
     ctx.save();
     ctx.translate(x, y);
