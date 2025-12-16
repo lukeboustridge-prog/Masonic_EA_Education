@@ -154,9 +154,6 @@ export const generateSpriteUrl = (key: string): string => {
         // Square (Angle Down) - Silver/Steel
         ctx.strokeStyle = '#cbd5e1'; 
         ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(0, 6); ctx.lineTo(10, -3); ctx.stroke();
-        // "G"
-        ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 12px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('G', 0, 1);
         break;
 
     case 'pillar_ionic': // Wisdom

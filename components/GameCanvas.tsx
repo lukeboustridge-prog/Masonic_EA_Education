@@ -13,7 +13,6 @@ const GameCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Dimensions state - Initialize safely for SSR/Window to prevent 0x0
-  // Added || 800 fallback in case window exists but reports 0 dimensions (hidden iframe)
   const [dimensions, setDimensions] = useState({ 
     w: typeof window !== 'undefined' ? (window.innerWidth || 800) : 800, 
     h: typeof window !== 'undefined' ? (window.innerHeight || 600) : 600 
@@ -76,6 +75,38 @@ const GameCanvas: React.FC = () => {
   // Fullscreen tracking
   const hasTriedFullscreenRef = useRef(false);
 
+  // Load Leaderboard on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('apprentice_leaderboard');
+      if (stored) {
+        setLeaderboard(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Failed to load leaderboard', e);
+    }
+  }, []);
+
+  const saveScoreToLeaderboard = (finalScore: number, completed: boolean) => {
+    const entry: LeaderboardEntry = {
+      id: Date.now().toString(),
+      name: playerName.trim() || 'Anonymous',
+      score: finalScore,
+      date: Date.now(),
+      completed
+    };
+
+    setLeaderboard(prev => {
+      const updated = [...prev, entry];
+      try {
+        localStorage.setItem('apprentice_leaderboard', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save leaderboard', e);
+      }
+      return updated;
+    });
+  };
+
   // --- Initialization & Resize ---
   useEffect(() => {
     const handleResize = () => {
@@ -108,75 +139,7 @@ const GameCanvas: React.FC = () => {
     checkStandalone();
   }, []);
 
-  // --- Leaderboard Fetching ---
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      setIsLoadingLeaderboard(true);
-      try {
-        const res = await fetch('/api/leaderboard');
-        if (res.ok) {
-          const data = await res.json();
-          setLeaderboard(data);
-        } else {
-          throw new Error('API Error');
-        }
-      } catch (e) {
-        // console.error("Failed to fetch global leaderboard, falling back to local", e);
-        const stored = localStorage.getItem('masonic_leaderboard');
-        if (stored) {
-          try {
-            setLeaderboard(JSON.parse(stored));
-          } catch (err) {
-            console.error(err);
-          }
-        }
-      } finally {
-        setIsLoadingLeaderboard(false);
-      }
-    };
-
-    fetchLeaderboard();
-  }, []);
-
-  const saveScoreToLeaderboard = async (finalScore: number, isComplete: boolean) => {
-    const newEntry: LeaderboardEntry = {
-      id: Date.now().toString(), // Temporary ID for optimistic update
-      name: playerName.trim() || "Unknown Brother",
-      score: finalScore,
-      date: Date.now(),
-      completed: isComplete
-    };
-    
-    // 1. Optimistic UI Update
-    const updated = [...leaderboard, newEntry];
-    setLeaderboard(updated);
-    
-    // 2. Local Backup
-    localStorage.setItem('masonic_leaderboard', JSON.stringify(updated));
-
-    // 3. Send to Global DB
-    try {
-      await fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEntry)
-      });
-    } catch (e) {
-      console.error("Failed to save score to global DB", e);
-    }
-  };
-
-  // Initialize player Y when dimensions change
-  useEffect(() => {
-    // Reset player if init
-    if (playerRef.current.y === 0) {
-        playerRef.current.y = DESIGN_HEIGHT - 100; 
-        playerRef.current.isGrounded = false;
-        playerRef.current.vy = 0;
-        playerRef.current.jumpCount = 0;
-    }
-  }, []);
-
+ 
   // Preload Sprites
   useEffect(() => {
     const uniqueKeys = Array.from(new Set(ORB_DATA.map(o => o.spriteKey)));
@@ -340,10 +303,7 @@ const GameCanvas: React.FC = () => {
 
   // Input Handler for both Touch and Mouse
   const handleInputStart = (key: string) => (e: React.TouchEvent | React.MouseEvent) => {
-    // We prevent default to stop things like text selection or scrolling,
-    // but we check if cancelable (especially important for touch events)
     if (e.cancelable) e.preventDefault();
-    
     enterFullscreen();
     if (key === 'Space') executeJump();
     keysRef.current[key] = true;
@@ -399,6 +359,28 @@ const GameCanvas: React.FC = () => {
     ctx.fillStyle = '#fca5a5'; 
     ctx.beginPath(); ctx.arc(0, -16, 7, 0, Math.PI * 2); ctx.fill();
 
+    // Hair (Dark Suit Color) - Fuller, completely covering top
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    // Start at front-right, high on forehead to expose face but cover top curve
+    ctx.moveTo(7, -20); 
+    // Curve high over the top (Head top is -23). Control points arch up.
+    ctx.bezierCurveTo(4, -27, -9, -27, -10, -20);
+    // Go down the back of the head
+    ctx.lineTo(-10, -9); 
+    // Cut in for sideburn/neck
+    ctx.lineTo(-3, -9);
+    // Sideburn go up
+    ctx.lineTo(-3, -14);
+    // Connect back to front forehead
+    ctx.lineTo(7, -20);
+    ctx.fill();
+
+    // Eye (Direction Indicator - Always on the 'front' side)
+    // Raised to y=-17 to align with higher hairline
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(4, -17, 2, 2); 
+
     // Suit Body (Dark Navy/Black Jacket)
     ctx.fillStyle = '#0f172a'; 
     ctx.fillRect(-7, -10, 14, 20);
@@ -419,6 +401,13 @@ const GameCanvas: React.FC = () => {
     ctx.fillStyle = '#0f172a'; 
     ctx.fillRect(-6, 10, 5, 12); ctx.fillRect(1, 10, 5, 12);  
 
+    // Shoes (Black - Pointing forward)
+    ctx.fillStyle = '#000000';
+    // Back foot
+    ctx.fillRect(-6, 22, 7, 3); 
+    // Front foot
+    ctx.fillRect(1, 22, 7, 3);
+
     // Arms (Sleeves - Match Suit)
     ctx.fillStyle = '#0f172a'; 
     ctx.fillRect(-9, -8, 3, 14); ctx.fillRect(6, -8, 3, 14);  
@@ -426,14 +415,6 @@ const GameCanvas: React.FC = () => {
     // Hands (Flesh tone)
     ctx.fillStyle = '#fca5a5';
     ctx.fillRect(-9, 6, 3, 3); ctx.fillRect(6, 6, 3, 3);
-
-    // Eyes
-    ctx.fillStyle = '#000000';
-    if (p.facing === 1) {
-        ctx.fillRect(2, -18, 2, 2);
-    } else {
-        ctx.fillRect(-4, -18, 2, 2);
-    }
 
     // Apron Overlay (If equipped)
     if (showApron) {
