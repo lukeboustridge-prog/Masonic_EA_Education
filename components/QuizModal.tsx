@@ -54,14 +54,14 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
       >
         {showSuccess ? (
           <div className="flex flex-col items-center justify-center h-full animate-in fade-in duration-300">
-             <div className="shrink-0 w-12 h-12 md:w-16 md:h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-4 border-2 border-green-500">
-                <svg className="w-8 h-8 md:w-10 md:h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+             <div className="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-green-900/30 rounded-full flex items-center justify-center mb-2 md:mb-4 border-2 border-green-500">
+                <svg className="w-6 h-6 md:w-8 md:h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
              </div>
-             <h2 className="text-xl md:text-3xl font-bold text-green-400 mb-4 uppercase tracking-widest text-center">Correct</h2>
+             <h2 className="text-lg md:text-2xl font-bold text-green-400 mb-2 md:mb-4 uppercase tracking-widest text-center">Correct</h2>
              
              {question.explanation && (
-               <div className="w-full bg-slate-800/80 p-4 md:p-6 rounded-lg border-l-4 border-amber-500 mb-6 shadow-inner">
-                 <p className="text-slate-200 font-serif text-sm md:text-lg leading-relaxed italic text-center md:text-left">
+               <div className="w-full bg-slate-800/80 p-3 md:p-5 rounded-lg border-l-4 border-amber-500 mb-4 md:mb-6 shadow-inner">
+                 <p className="text-slate-200 font-serif text-xs md:text-base leading-snug italic text-center md:text-left">
                    "{question.explanation}"
                  </p>
                </div>
@@ -69,7 +69,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
              
              <button 
                onClick={onCorrect}
-               className="px-6 py-3 md:px-8 bg-green-700 hover:bg-green-600 text-white font-bold text-base md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg active:scale-95"
+               className="px-6 py-2 md:px-8 md:py-3 bg-green-700 hover:bg-green-600 text-white font-bold text-sm md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg active:scale-95"
              >
                Continue Journey
              </button>
