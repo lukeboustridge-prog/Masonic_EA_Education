@@ -397,17 +397,6 @@ const GameCanvas: React.FC = () => {
         // Tie goes around back
         ctx.beginPath(); ctx.moveTo(2, -17); ctx.lineTo(-7, -17); ctx.stroke();
 
-        // Cable Tow (Rope around neck)
-        ctx.strokeStyle = '#d97706'; // Rope color
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        // Loop around neck
-        ctx.moveTo(3, -9); 
-        ctx.bezierCurveTo(3, -5, -3, -5, -3, -9);
-        // Trailing end (hanging down back or chest)
-        ctx.moveTo(0, -5); ctx.lineTo(-2, 5);
-        ctx.stroke();
-
         // Suit Body (Dark Navy)
         ctx.fillStyle = '#0f172a'; 
         ctx.fillRect(-7, -10, 14, 20);
@@ -451,6 +440,32 @@ const GameCanvas: React.FC = () => {
         // Right Foot (Front): Shoe on
         ctx.fillStyle = '#000000';
         ctx.fillRect(1 + rightLegOffset, 22, 7, 3);
+
+        // Cable Tow (Rope around neck) - Drawn LAST to be visible over body
+        ctx.strokeStyle = '#d97706'; // Rope color
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        ctx.beginPath();
+        // Loop around neck (Visual representation over the suit)
+        // Head is roughly -16 to -9. Suit top is -10.
+        // Draw ellipse-like curve for the noose
+        ctx.moveTo(-4, -11);
+        ctx.quadraticCurveTo(0, -7, 4, -11); // Front dip over chest
+        ctx.stroke();
+
+        // The running noose knot
+        ctx.fillStyle = '#b45309';
+        ctx.beginPath(); ctx.arc(3, -9, 2.5, 0, Math.PI*2); ctx.fill();
+
+        // Trailing end
+        ctx.beginPath();
+        ctx.moveTo(3, -9);
+        // Rope hangs down and swings slightly with movement
+        const ropeSwing = isMoving ? Math.sin(walkCycle) * 3 : 0;
+        ctx.quadraticCurveTo(6, -2, 5 + ropeSwing, 8); // Hangs down to side
+        ctx.stroke();
 
     } else {
         // --- RESTORED (Original) STATE ---
