@@ -95,6 +95,7 @@ export const QUESTIONS: Question[] = [
     ],
     correctAnswer: "To mark the setting sun and close the Lodge."
   },
+  // Q8 replaced by chain Q801, Q802, Q803
   {
     id: 8,
     text: "During the Rite of Destitution (Charity Charge) in the N.E. Corner, what is the candidate asked to deposit?",
@@ -104,6 +105,26 @@ export const QUESTIONS: Question[] = [
       "His metallic substances."
     ],
     correctAnswer: "Whatever he feels disposed to give."
+  },
+  {
+    id: 801,
+    text: "Before you were admitted into the Lodge, you were divested of all metallic substances. Why?",
+    answers: [
+      "Because they are valuable.",
+      "To show my poverty.",
+      "That I might bring nothing offensive or defensive into the Lodge."
+    ],
+    correctAnswer: "That I might bring nothing offensive or defensive into the Lodge."
+  },
+  {
+    id: 802,
+    text: "There is a second reason for being divested of metals, referring to the building of King Solomon's Temple. What is it?",
+    answers: [
+      "Metal tools were too expensive.",
+      "There was not heard the sound of any axe, hammer, or other metal tool.",
+      "The stones were cut in the quarry using lasers."
+    ],
+    correctAnswer: "There was not heard the sound of any axe, hammer, or other metal tool."
   },
   {
     id: 9,
@@ -374,7 +395,8 @@ export const ORB_DATA: OrbDefinition[] = [
   // --- Hills ---
   { id: 6, x: 1850, yOffset: -350, radius: 20, questionId: 6, ...TOOLS.ROUGH }, // Rough Intro
   { id: 7, x: 2300, yOffset: -150, radius: 20, questionId: 7, ...TOOLS.PERFECT }, // Perfect Intro
-  { id: 8, x: 2700, yOffset: -150, radius: 20, questionId: 8, ...TOOLS.LADDER }, // Ladder Intro
+  // REMOVED ID 8 (Ladder/Question 8) - Replaced by Junior Warden NPC encounter
+  // { id: 8, x: 2700, yOffset: -150, radius: 20, questionId: 8, ...TOOLS.LADDER }, 
 
   // --- Mines ---
   // Specific Questions (Gauge Q10, Gavel Q11) matched to their 2nd appearance

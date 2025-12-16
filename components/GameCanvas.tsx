@@ -39,6 +39,10 @@ const GameCanvas: React.FC = () => {
 
   // Player Progression State
   const [hasApron, setHasApron] = useState(false);
+  const [isRestored, setIsRestored] = useState(false); // Track if Master has restored comforts
+  
+  // JW Interaction State (0: Start, 1: Q801 done, 2: Q802 done, 3: Completed)
+  const [jwProgress, setJwProgress] = useState(0);
 
   // Standalone Mode State
   const [isStandalone, setIsStandalone] = useState(false);
@@ -144,10 +148,12 @@ const GameCanvas: React.FC = () => {
   useEffect(() => {
     const uniqueKeys = Array.from(new Set(ORB_DATA.map(o => o.spriteKey)));
     
-    // We explicitly include 'square_compass' (was checkpoint)
+    // We explicitly include 'square_compass', 'worshipful_master', and 'junior_warden'
     const assetsToLoad = [
         ...uniqueKeys,
         'square_compass', 
+        'worshipful_master',
+        'junior_warden',
         'pillar_ionic', 
         'pillar_doric', 
         'pillar_corinthian'
@@ -348,12 +354,10 @@ const GameCanvas: React.FC = () => {
     ctx.strokeRect(x, y, w, h);
   };
 
-  const drawPlayerSprite = (ctx: CanvasRenderingContext2D, p: Player, showApron: boolean) => {
+  const drawPlayerSprite = (ctx: CanvasRenderingContext2D, p: Player, showApron: boolean, isRestored: boolean) => {
     ctx.save();
     ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
     ctx.scale(p.facing, 1); 
-
-    // -- Drawn as Masonic Brother in Suit --
 
     // Head (Flesh tone)
     ctx.fillStyle = '#fca5a5'; 
@@ -362,62 +366,123 @@ const GameCanvas: React.FC = () => {
     // Hair (Dark Suit Color) - Fuller, completely covering top
     ctx.fillStyle = '#0f172a';
     ctx.beginPath();
-    // Start at front-right, high on forehead to expose face but cover top curve
     ctx.moveTo(7, -20); 
-    // Curve high over the top (Head top is -23). Control points arch up.
     ctx.bezierCurveTo(4, -27, -9, -27, -10, -20);
-    // Go down the back of the head
     ctx.lineTo(-10, -9); 
-    // Cut in for sideburn/neck
     ctx.lineTo(-3, -9);
-    // Sideburn go up
     ctx.lineTo(-3, -14);
-    // Connect back to front forehead
     ctx.lineTo(7, -20);
     ctx.fill();
 
-    // Eye (Direction Indicator - Always on the 'front' side)
-    // Raised to y=-17 to align with higher hairline
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(4, -17, 2, 2); 
+    if (!isRestored) {
+        // --- CANDIDATE STATE ---
+        // Blindfold (White cloth across eyes)
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(2, -19, 6, 5); 
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 0.5; ctx.strokeRect(2, -19, 6, 5);
+        // Tie goes around back
+        ctx.beginPath(); ctx.moveTo(2, -17); ctx.lineTo(-7, -17); ctx.stroke();
 
-    // Suit Body (Dark Navy/Black Jacket)
-    ctx.fillStyle = '#0f172a'; 
-    ctx.fillRect(-7, -10, 14, 20);
+        // Cable Tow (Rope around neck)
+        ctx.strokeStyle = '#d97706'; // Rope color
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Loop around neck
+        ctx.moveTo(3, -9); 
+        ctx.bezierCurveTo(3, -5, -3, -5, -3, -9);
+        // Trailing end (hanging down back or chest)
+        ctx.moveTo(0, -5); ctx.lineTo(-2, 5);
+        ctx.stroke();
 
-    // White Shirt (V-Shape or Rectangle at chest)
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-4, -10); ctx.lineTo(4, -10); ctx.lineTo(0, 0); 
-    ctx.fill();
+        // Suit Body (Dark Navy)
+        ctx.fillStyle = '#0f172a'; 
+        ctx.fillRect(-7, -10, 14, 20);
 
-    // Black Tie
-    ctx.fillStyle = '#0f172a';
-    ctx.beginPath();
-    ctx.moveTo(-1, -10); ctx.lineTo(1, -10); ctx.lineTo(0.5, -2); ctx.lineTo(-0.5, -2);
-    ctx.fill();
+        // Right Breast Bare (Flesh patch on chest)
+        // Since we are 2D side view:
+        // If facing Right (1): Right breast is in foreground.
+        // If facing Left (-1): Right breast is in background (obscured mostly).
+        // Stylized: Draw it on the front chest area.
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillRect(0, -8, 6, 6); // Patch on right (front) side of chest
 
-    // Legs (Trousers - Match Suit)
-    ctx.fillStyle = '#0f172a'; 
-    ctx.fillRect(-6, 10, 5, 12); ctx.fillRect(1, 10, 5, 12);  
+        // Left Arm Bare (Flesh color)
+        // Facing Right: Left arm is background (x: -9).
+        // Facing Left: Left arm is foreground (x: -9 relative to sprite, but scale makes it front).
+        // The sprite logic defines -9 as the "Back" arm in code logic below.
+        ctx.fillStyle = '#fca5a5'; // Bare Left Arm
+        ctx.fillRect(-9, -8, 3, 14); 
+        
+        ctx.fillStyle = '#0f172a'; // Clothed Right Arm (Front)
+        ctx.fillRect(6, -8, 3, 14);  
 
-    // Shoes (Black - Pointing forward)
-    ctx.fillStyle = '#000000';
-    // Back foot
-    ctx.fillRect(-6, 22, 7, 3); 
-    // Front foot
-    ctx.fillRect(1, 22, 7, 3);
+        // Hands
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillRect(-9, 6, 3, 3); ctx.fillRect(6, 6, 3, 3);
 
-    // Arms (Sleeves - Match Suit)
-    ctx.fillStyle = '#0f172a'; 
-    ctx.fillRect(-9, -8, 3, 14); ctx.fillRect(6, -8, 3, 14);  
+        // Legs (Trousers)
+        ctx.fillStyle = '#0f172a'; 
+        ctx.fillRect(-6, 10, 5, 12); // Left Leg (Back)
+        ctx.fillRect(1, 10, 5, 12);  // Right Leg (Front)
 
-    // Hands (Flesh tone)
-    ctx.fillStyle = '#fca5a5';
-    ctx.fillRect(-9, 6, 3, 3); ctx.fillRect(6, 6, 3, 3);
+        // Left Knee Bare (Flesh patch on Left/Back leg)
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillRect(-6, 14, 5, 4); // Knee area bare
+
+        // Shoes
+        // Right Foot (Front): Shoe on
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(1, 22, 7, 3);
+
+        // Left Foot (Back): Slipshod (Heel exposed or slipper)
+        // Draw slightly smaller or lighter to imply slipshod/bare heel
+        ctx.fillStyle = '#000000'; 
+        ctx.fillRect(-6, 22, 4, 3); // Toe only
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillRect(-2, 22, 3, 3); // Heel bare
+
+    } else {
+        // --- RESTORED (Original) STATE ---
+        // Eye
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(4, -17, 2, 2); 
+
+        // Suit Body
+        ctx.fillStyle = '#0f172a'; 
+        ctx.fillRect(-7, -10, 14, 20);
+
+        // White Shirt
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-4, -10); ctx.lineTo(4, -10); ctx.lineTo(0, 0); 
+        ctx.fill();
+
+        // Black Tie
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.moveTo(-1, -10); ctx.lineTo(1, -10); ctx.lineTo(0.5, -2); ctx.lineTo(-0.5, -2);
+        ctx.fill();
+
+        // Legs
+        ctx.fillStyle = '#0f172a'; 
+        ctx.fillRect(-6, 10, 5, 12); ctx.fillRect(1, 10, 5, 12);  
+
+        // Shoes
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(-6, 22, 7, 3); 
+        ctx.fillRect(1, 22, 7, 3);
+
+        // Arms
+        ctx.fillStyle = '#0f172a'; 
+        ctx.fillRect(-9, -8, 3, 14); ctx.fillRect(6, -8, 3, 14);  
+
+        // Hands
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillRect(-9, 6, 3, 3); ctx.fillRect(6, 6, 3, 3);
+    }
 
     // Apron Overlay (If equipped)
-    if (showApron) {
+    if (showApron && isRestored) {
         // Waist Band
         ctx.fillStyle = '#f8fafc'; // White Leather
         ctx.strokeStyle = '#cbd5e1'; // Subtle border
@@ -437,6 +502,136 @@ const GameCanvas: React.FC = () => {
         ctx.fill();
         ctx.stroke();
     }
+
+    ctx.restore();
+  };
+
+  // Draw the Worshipful Master NPC (NZ Style)
+  const drawMaster = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // Suit Body (Black)
+    ctx.fillStyle = '#0f172a'; 
+    ctx.fillRect(-9, -25, 18, 25);
+    
+    // Head (Flesh)
+    ctx.fillStyle = '#fca5a5';
+    ctx.beginPath(); ctx.arc(0, -34, 8, 0, Math.PI*2); ctx.fill();
+    
+    // Facial Features (Eyes)
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(-3, -35, 2, 2); // Left Eye
+    ctx.fillRect(1, -35, 2, 2);  // Right Eye
+
+    // Hair (White/Grey Balding)
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    // Sideburns/Back
+    ctx.moveTo(-8, -36); ctx.lineTo(-9, -30); ctx.lineTo(-9, -28); // Left side
+    ctx.moveTo(8, -36); ctx.lineTo(9, -30); ctx.lineTo(9, -28); // Right side
+    ctx.fill();
+    // Specifically draw hair tufts on side
+    ctx.fillRect(-9, -36, 2, 6);
+    ctx.fillRect(7, -36, 2, 6);
+
+    // Master's Apron (NZ Style: Light Blue Border, Silver Tassels/Taus)
+    // Waistband
+    ctx.fillStyle = '#38bdf8'; // Light Blue
+    ctx.fillRect(-8, -15, 16, 2); 
+    // Apron Body (White)
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(-8, -13, 16, 10);
+    // Borders (Light Blue)
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.strokeRect(-8, -13, 16, 10);
+    
+    // Taus (Inverted T: ⊥) for Installed Master (Moved UP to avoid border overlap)
+    ctx.fillStyle = '#38bdf8'; 
+    // Left Tau (⊥) - Shifted up by 2px (y: -6 bottom bar, -9 top stem)
+    ctx.fillRect(-7, -6, 3, 1); // Bottom bar
+    ctx.fillRect(-6, -9, 1, 3); // Stem going up
+    // Right Tau (⊥)
+    ctx.fillRect(4, -6, 3, 1); // Bottom bar
+    ctx.fillRect(5, -9, 1, 3); // Stem going up
+    
+    // Collar (V-Shape, Light Blue)
+    ctx.strokeStyle = '#38bdf8'; // Sky Blue
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-9, -25); ctx.lineTo(0, -15); ctx.lineTo(9, -25); ctx.stroke();
+    
+    // Jewel (Square, Chevron UP ^)
+    ctx.strokeStyle = '#cbd5e1'; // Silver
+    ctx.lineWidth = 2;
+    // Draw ^ shape at bottom of collar
+    ctx.beginPath(); ctx.moveTo(-3, -11); ctx.lineTo(0, -15); ctx.lineTo(3, -11); ctx.stroke();
+
+    // Gauntlets (Cuffs) - Light Blue
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-11, -18, 2, 6); // Left Arm cuff (visible side)
+    ctx.fillRect(9, -18, 2, 6);   // Right Arm cuff
+
+    ctx.restore();
+  };
+
+  // Draw the Junior Warden NPC (MM Apron, Plumb Rule)
+  const drawJuniorWarden = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Suit Body (Dark)
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-9, -25, 18, 25);
+
+    // Head (Flesh)
+    ctx.fillStyle = '#fca5a5';
+    ctx.beginPath(); ctx.arc(0, -34, 8, 0, Math.PI*2); ctx.fill();
+
+    // Facial Features (Eyes)
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(-3, -35, 2, 2); // Left Eye
+    ctx.fillRect(1, -35, 2, 2);  // Right Eye
+
+    // Hair (Dark Brown - Natural, no headband)
+    ctx.fillStyle = '#78350f';
+    // Draw hair cap/top
+    ctx.beginPath();
+    ctx.arc(0, -34, 8, Math.PI, 0); // Top half of head
+    ctx.lineTo(8, -32); // Sideburn right
+    ctx.lineTo(6, -32); // Sideburn inner
+    ctx.lineTo(-6, -32); // Sideburn inner
+    ctx.lineTo(-8, -32); // Sideburn left
+    ctx.fill();
+
+    // Master Mason Apron (3 Rosettes)
+    // Waistband
+    ctx.fillStyle = '#38bdf8'; // Light Blue
+    ctx.fillRect(-8, -15, 16, 2);
+    // Body
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(-8, -13, 16, 10);
+    // Border
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+    ctx.strokeRect(-8, -13, 16, 10);
+    // Rosettes
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath(); ctx.arc(-5, -6, 1.5, 0, Math.PI*2); ctx.fill(); // Left
+    ctx.beginPath(); ctx.arc(5, -6, 1.5, 0, Math.PI*2); ctx.fill();  // Right
+    ctx.beginPath(); ctx.arc(0, -14, 1.5, 0, Math.PI*2); ctx.fill(); // Flap (Approx)
+
+    // Collar (Light Blue)
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-9, -25); ctx.lineTo(0, -15); ctx.lineTo(9, -25); ctx.stroke();
+
+    // Jewel (Plumb Rule)
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(0, -8); ctx.stroke(); // Vertical Line
+    ctx.beginPath(); ctx.arc(0, -8, 1, 0, Math.PI*2); ctx.stroke(); // Bob
+
+    // Gauntlets
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(-11, -18, 2, 6);
+    ctx.fillRect(9, -18, 2, 6);
 
     ctx.restore();
   };
@@ -563,13 +758,71 @@ const GameCanvas: React.FC = () => {
         if (keys['ArrowLeft']) { player.vx -= 1; player.facing = -1; }
         if (keys['ArrowRight']) { player.vx += 1; player.facing = 1; }
 
-        if (player.vx > MOVE_SPEED) player.vx = MOVE_SPEED;
-        if (player.vx < -MOVE_SPEED) player.vx = -MOVE_SPEED;
+        // MOVEMENT LIMIT FOR BLINDFOLDED CANDIDATE
+        const currentSpeedLimit = isRestored ? MOVE_SPEED : 1.5; // Slow crawl if not restored
+
+        if (player.vx > currentSpeedLimit) player.vx = currentSpeedLimit;
+        if (player.vx < -currentSpeedLimit) player.vx = -currentSpeedLimit;
+        
         player.vx *= FRICTION;
         if (Math.abs(player.vx) < 0.1) player.vx = 0;
         player.x += player.vx;
         player.vy += GRAVITY;
         player.y += player.vy;
+
+        // --- NPC INTERACTIONS ---
+
+        // 1. WORSHIPFUL MASTER INTERACTION
+        const masterX = 250; 
+        const masterY = groundRefY; // On the ground
+        if (!isRestored) {
+            const distToMaster = Math.abs((player.x + player.width/2) - masterX);
+            if (distToMaster < 50 && Math.abs((player.y + player.height) - masterY) < 50) {
+                // Trigger Interaction
+                player.vx = 0;
+                keysRef.current = {}; // Stop movement
+                
+                // Use Lore logic to show Master Dialogue
+                const masterOrbMock: Orb = {
+                    id: 999,
+                    x: 0, y: 0, radius: 0, active: true,
+                    name: "Worshipful Master",
+                    spriteKey: "worshipful_master",
+                    blurb: "Congratulation on your Initiation. I now remove your blindfold and cable-tow, and restore you to your personal comforts. Seek the hidden knowledge within this level to prove your proficiency."
+                };
+                setActiveOrb(masterOrbMock);
+                setGameState(GameState.LORE);
+                playSound('lore');
+            }
+        }
+
+        // 2. JUNIOR WARDEN INTERACTION (Replaces Orb 8)
+        const jwX = 2700;
+        // Fix: Place JW on the platform at yOffset -100.
+        // Platform top is groundRefY - 100. Sprite draws upwards from origin.
+        const jwY = groundRefY - 100; 
+        
+        // Track interaction based on progress state
+        if (jwProgress < 3) {
+            const distToJW = Math.abs((player.x + player.width/2) - jwX);
+            const heightDiff = Math.abs((player.y + player.height) - jwY); // Check feet relative to platform
+
+            if (distToJW < 40 && heightDiff < 50) {
+                 player.vx = 0;
+                 keysRef.current = {};
+
+                 const jwOrbMock: Orb = {
+                    id: 998,
+                    x: 0, y: 0, radius: 0, active: true,
+                    name: "Junior Warden",
+                    spriteKey: "junior_warden",
+                    blurb: "Brother, before you proceed further, I must ask you a few questions regarding your entrance into the Lodge."
+                 };
+                 setActiveOrb(jwOrbMock);
+                 setGameState(GameState.LORE);
+                 playSound('lore');
+            }
+        }
 
         for (const cp of CHECKPOINTS) {
             if (player.x > cp.x && cp.x > lastCheckpointRef.current.x) {
@@ -689,6 +942,12 @@ const GameCanvas: React.FC = () => {
 
         drawTempleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
 
+        // Draw Master of the Lodge
+        drawMaster(ctx, masterX, masterY);
+
+        // Draw Junior Warden
+        drawJuniorWarden(ctx, jwX, jwY);
+
         CHECKPOINTS.forEach(cp => {
             // Load Square and Compass (generated as 'square_compass')
             const cpImg = spritesRef.current['square_compass'];
@@ -740,7 +999,7 @@ const GameCanvas: React.FC = () => {
         }
         });
 
-        drawPlayerSprite(ctx, player, hasApron);
+        drawPlayerSprite(ctx, player, hasApron, isRestored);
         ctx.restore();
 
         ctx.resetTransform();
@@ -755,7 +1014,7 @@ const GameCanvas: React.FC = () => {
     }
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, dimensions, hasApron, warningMessage, score, leaderboard, playerName]); 
+  }, [gameState, dimensions, hasApron, warningMessage, score, leaderboard, playerName, isRestored, jwProgress]); 
 
   useEffect(() => {
     if (gameState === GameState.PLAYING) {
@@ -765,6 +1024,31 @@ const GameCanvas: React.FC = () => {
   }, [gameState, gameLoop]);
 
   const handleLoreContinue = () => {
+      // Special check for Master NPC (Fake Orb ID 999)
+      if (activeOrb && activeOrb.id === 999) {
+          setIsRestored(true);
+          setActiveOrb(null);
+          setGameState(GameState.PLAYING);
+          return;
+      }
+
+      // Special check for Junior Warden NPC (Fake Orb ID 998)
+      if (activeOrb && activeOrb.id === 998) {
+          // Check progress to determine which question to ask next
+          let nextQId = 801;
+          if (jwProgress === 1) nextQId = 802;
+          if (jwProgress === 2) nextQId = 8; // Original Rite of Destitution Question
+
+          const question = QUESTIONS.find(q => q.id === nextQId);
+          if (question) {
+              setActiveQuestion(question);
+              setGameState(GameState.QUIZ);
+          } else {
+              setGameState(GameState.PLAYING); // Fallback
+          }
+          return;
+      }
+
       if (activeOrb) {
         if (activeOrb.questionId === undefined) {
              handleCorrectAnswer();
@@ -781,6 +1065,21 @@ const GameCanvas: React.FC = () => {
   const handleCorrectAnswer = () => {
     playSound('collect');
     setScore(s => s + 100);
+    
+    // Check if this was the JW Interaction
+    if (activeQuestion && (activeQuestion.id === 801 || activeQuestion.id === 802 || activeQuestion.id === 8)) {
+        // Advance JW Progress
+        const nextProgress = jwProgress + 1;
+        setJwProgress(nextProgress);
+        
+        setActiveOrb(null);
+        setActiveQuestion(null);
+        keysRef.current = {};
+        playerRef.current.vx = 0;
+        setGameState(GameState.PLAYING);
+        return;
+    }
+
     if (activeOrb) {
         orbsStateRef.current.add(activeOrb.id);
         if (activeOrb.spriteKey === 'apron') setHasApron(true);
@@ -814,6 +1113,8 @@ const GameCanvas: React.FC = () => {
     setActiveQuestion(null);
     cameraRef.current = { x: 0, y: 0 };
     setHasApron(false);
+    setIsRestored(false); // Reset to candidate state
+    setJwProgress(0); // Reset JW flow
     seenLoreRef.current.clear();
     setGameState(goToMenu ? GameState.START_MENU : GameState.PLAYING);
   };

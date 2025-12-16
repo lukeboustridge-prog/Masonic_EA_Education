@@ -64,12 +64,6 @@ export const generateSpriteUrl = (key: string): string => {
         // Highlight/Grain
         ctx.fillStyle = '#b45309'; 
         ctx.fillRect(-8, -9, 16, 2);
-
-        // Cutting Edge / Chisel Point (Optional but traditional for stone gavel)
-        // If we want "wooden mallet", the above cylindrical shape is better. 
-        // If we want "Common Gavel" (stone hammer), it has a sharp edge.
-        // User asked for "Wooden", implies a Master's Gavel or Maul.
-        // Let's stick to the mallet block shape above.
         break;
 
     case 'chisel': // Chisel
@@ -144,6 +138,90 @@ export const generateSpriteUrl = (key: string): string => {
         ctx.fillStyle = '#ffffff'; 
         ctx.fill(); 
         ctx.stroke();
+        break;
+        
+    case 'worshipful_master': // The Master Icon (NZ Style - Installed Master)
+        ctx.translate(cx, cy);
+        
+        // Head (Balding)
+        ctx.fillStyle = '#fca5a5'; // Face
+        ctx.beginPath(); ctx.arc(0, -6, 9, 0, Math.PI*2); ctx.fill();
+        
+        // Facial Features
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(-3, -7, 2, 2); // Left Eye
+        ctx.fillRect(1, -7, 2, 2);  // Right Eye
+
+        // Hair (White sides)
+        ctx.fillStyle = '#e2e8f0'; 
+        ctx.fillRect(-10, -8, 3, 8); 
+        ctx.fillRect(7, -8, 3, 8);
+        
+        // Suit Body
+        fillRect(-12, 4, 24, 12, '#0f172a');
+        
+        // Collar (Light Blue)
+        ctx.strokeStyle = '#38bdf8'; // Sky Blue
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(0, 14); ctx.lineTo(10, 4); ctx.stroke();
+        
+        // Jewel (Square, Chevron UP ^ )
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+        ctx.beginPath(); 
+        // Draw ^ shape at bottom of collar
+        ctx.moveTo(-4, 18); ctx.lineTo(0, 14); ctx.lineTo(4, 18); 
+        ctx.stroke();
+
+        // Installed Master Apron Elements (Taus / Levels - Inverted T)
+        // Shifted up to avoid border overlap
+        ctx.fillStyle = '#38bdf8';
+        // Left Inverted Tau
+        ctx.fillRect(-6, 11, 3, 1); // Bottom bar (Shifted up from 12)
+        ctx.fillRect(-5, 9, 1, 3); // Stem up
+        // Right Inverted Tau
+        ctx.fillRect(4, 11, 3, 1); // Bottom bar
+        ctx.fillRect(5, 9, 1, 3); // Stem up
+        break;
+
+    case 'junior_warden': // Junior Warden Icon (Master Mason Apron, Plumb Rule)
+        ctx.translate(cx, cy);
+        
+        // Head (Brown hair)
+        ctx.fillStyle = '#fca5a5'; 
+        ctx.beginPath(); ctx.arc(0, -6, 8, 0, Math.PI*2); ctx.fill();
+        
+        // Facial Features
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(-3, -7, 2, 2); // Left Eye
+        ctx.fillRect(1, -7, 2, 2);  // Right Eye
+
+        // Hair (Dark Brown - Natural, not headband)
+        ctx.fillStyle = '#78350f'; 
+        // Draw hair cap
+        ctx.beginPath(); 
+        ctx.arc(0, -6, 8, Math.PI, 0); // Top half
+        ctx.lineTo(8, -4); 
+        ctx.lineTo(6, -4);
+        ctx.lineTo(-6, -4);
+        ctx.lineTo(-8, -4);
+        ctx.fill();
+        
+        // Suit
+        fillRect(-12, 4, 24, 12, '#0f172a');
+        
+        // Collar (Light Blue)
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(0, 14); ctx.lineTo(10, 4); ctx.stroke();
+
+        // Jewel: Plumb Rule (Vertical Line + Bob)
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, 14); ctx.lineTo(0, 20); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 20, 1.5, 0, Math.PI*2); ctx.stroke();
+
+        // MM Apron Rosettes (Simulated)
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath(); ctx.arc(-4, 12, 1, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, 12, 1, 0, Math.PI*2); ctx.fill();
         break;
 
     case 'square_compass': // Logo/Checkpoint
