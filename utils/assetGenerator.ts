@@ -159,6 +159,15 @@ export const generateSpriteUrl = (key: string): string => {
         
         // Suit Body
         fillRect(-12, 4, 24, 12, '#0f172a');
+
+        // --- LOUNGE SUIT DETAILS (Icon) ---
+        // White Shirt (Triangle)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.moveTo(-4, 4); ctx.lineTo(4, 4); ctx.lineTo(0, 8); ctx.fill();
+        // Black Tie
+        ctx.fillStyle = '#000000';
+        ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(-1, 8); ctx.lineTo(0, 10); ctx.lineTo(1, 8); ctx.fill();
+        // ---------------------------------
         
         // Collar (Light Blue)
         ctx.strokeStyle = '#38bdf8'; // Sky Blue
@@ -208,6 +217,15 @@ export const generateSpriteUrl = (key: string): string => {
         
         // Suit
         fillRect(-12, 4, 24, 12, '#0f172a');
+
+        // --- LOUNGE SUIT DETAILS (Icon) ---
+        // White Shirt (Triangle)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.moveTo(-4, 4); ctx.lineTo(4, 4); ctx.lineTo(0, 8); ctx.fill();
+        // Black Tie
+        ctx.fillStyle = '#000000';
+        ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(-1, 8); ctx.lineTo(0, 10); ctx.lineTo(1, 8); ctx.fill();
+        // ---------------------------------
         
         // Collar (Light Blue)
         ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;

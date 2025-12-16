@@ -359,6 +359,26 @@ const GameCanvas: React.FC = () => {
     ctx.translate(p.x + p.width / 2, p.y + p.height / 2);
     ctx.scale(p.facing, 1); 
 
+    // ANIMATION LOGIC
+    // Calculate leg swing based on time
+    const walkSpeed = 150; // ms per cycle
+    const isMoving = Math.abs(p.vx) > 0.1;
+    const walkCycle = Date.now() / walkSpeed;
+    
+    // Leg Offsets (in pixels)
+    let leftLegOffset = 0;
+    let rightLegOffset = 0;
+
+    if (!p.isGrounded) {
+        // Jump Pose: Splay legs slightly
+        leftLegOffset = -4; // Back leg kick
+        rightLegOffset = 5;  // Front leg reach
+    } else if (isMoving) {
+        // Walk Cycle: Oscillate
+        leftLegOffset = Math.sin(walkCycle) * 4;
+        rightLegOffset = Math.sin(walkCycle + Math.PI) * 4;
+    }
+
     // Head (Flesh tone)
     ctx.fillStyle = '#fca5a5'; 
     ctx.beginPath(); ctx.arc(0, -16, 7, 0, Math.PI * 2); ctx.fill();
@@ -399,47 +419,44 @@ const GameCanvas: React.FC = () => {
         ctx.fillRect(-7, -10, 14, 20);
 
         // Right Breast Bare (Flesh patch on chest)
-        // Since we are 2D side view:
-        // If facing Right (1): Right breast is in foreground.
-        // If facing Left (-1): Right breast is in background (obscured mostly).
-        // Stylized: Draw it on the front chest area.
         ctx.fillStyle = '#fca5a5';
-        ctx.fillRect(0, -8, 6, 6); // Patch on right (front) side of chest
+        ctx.fillRect(0, -8, 6, 6); 
 
-        // Left Arm Bare (Flesh color)
-        // Facing Right: Left arm is background (x: -9).
-        // Facing Left: Left arm is foreground (x: -9 relative to sprite, but scale makes it front).
-        // The sprite logic defines -9 as the "Back" arm in code logic below.
-        ctx.fillStyle = '#fca5a5'; // Bare Left Arm
-        ctx.fillRect(-9, -8, 3, 14); 
+        // Left Arm Bare (Flesh color) - Background Arm
+        ctx.fillStyle = '#fca5a5'; 
+        ctx.fillRect(-9 + (isMoving ? leftLegOffset * 0.5 : 0), -8, 3, 14); // Slight arm swing
         
-        ctx.fillStyle = '#0f172a'; // Clothed Right Arm (Front)
-        ctx.fillRect(6, -8, 3, 14);  
+        // Clothed Right Arm (Front)
+        ctx.fillStyle = '#0f172a'; 
+        ctx.fillRect(6 + (isMoving ? rightLegOffset * 0.5 : 0), -8, 3, 14);  
 
         // Hands
         ctx.fillStyle = '#fca5a5';
-        ctx.fillRect(-9, 6, 3, 3); ctx.fillRect(6, 6, 3, 3);
+        ctx.fillRect(-9 + (isMoving ? leftLegOffset * 0.5 : 0), 6, 3, 3); 
+        ctx.fillRect(6 + (isMoving ? rightLegOffset * 0.5 : 0), 6, 3, 3);
 
-        // Legs (Trousers)
+        // Legs (Trousers) - Animated
+        // Left Leg (Back)
         ctx.fillStyle = '#0f172a'; 
-        ctx.fillRect(-6, 10, 5, 12); // Left Leg (Back)
-        ctx.fillRect(1, 10, 5, 12);  // Right Leg (Front)
-
+        ctx.fillRect(-6 + leftLegOffset, 10, 5, 12); 
         // Left Knee Bare (Flesh patch on Left/Back leg)
         ctx.fillStyle = '#fca5a5';
-        ctx.fillRect(-6, 14, 5, 4); // Knee area bare
+        ctx.fillRect(-6 + leftLegOffset, 14, 5, 4);
+
+        // Right Leg (Front)
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(1 + rightLegOffset, 10, 5, 12);  
 
         // Shoes
+        // Left Foot (Back): Slipshod (Heel exposed)
+        ctx.fillStyle = '#000000'; 
+        ctx.fillRect(-6 + leftLegOffset, 22, 4, 3); // Toe only
+        ctx.fillStyle = '#fca5a5';
+        ctx.fillRect(-2 + leftLegOffset, 22, 3, 3); // Heel bare
+
         // Right Foot (Front): Shoe on
         ctx.fillStyle = '#000000';
-        ctx.fillRect(1, 22, 7, 3);
-
-        // Left Foot (Back): Slipshod (Heel exposed or slipper)
-        // Draw slightly smaller or lighter to imply slipshod/bare heel
-        ctx.fillStyle = '#000000'; 
-        ctx.fillRect(-6, 22, 4, 3); // Toe only
-        ctx.fillStyle = '#fca5a5';
-        ctx.fillRect(-2, 22, 3, 3); // Heel bare
+        ctx.fillRect(1 + rightLegOffset, 22, 7, 3);
 
     } else {
         // --- RESTORED (Original) STATE ---
@@ -463,22 +480,30 @@ const GameCanvas: React.FC = () => {
         ctx.moveTo(-1, -10); ctx.lineTo(1, -10); ctx.lineTo(0.5, -2); ctx.lineTo(-0.5, -2);
         ctx.fill();
 
-        // Legs
+        // Legs - Animated
         ctx.fillStyle = '#0f172a'; 
-        ctx.fillRect(-6, 10, 5, 12); ctx.fillRect(1, 10, 5, 12);  
+        ctx.fillRect(-6 + leftLegOffset, 10, 5, 12); // Left Leg
+        ctx.fillRect(1 + rightLegOffset, 10, 5, 12); // Right Leg
 
         // Shoes
         ctx.fillStyle = '#000000';
-        ctx.fillRect(-6, 22, 7, 3); 
-        ctx.fillRect(1, 22, 7, 3);
+        ctx.fillRect(-6 + leftLegOffset, 22, 7, 3); 
+        ctx.fillRect(1 + rightLegOffset, 22, 7, 3);
 
-        // Arms
+        // Arms - Animated slightly inverse to legs
         ctx.fillStyle = '#0f172a'; 
-        ctx.fillRect(-9, -8, 3, 14); ctx.fillRect(6, -8, 3, 14);  
+        // Arm swing is usually opposite to leg. Left leg forward -> Left arm back.
+        // We used leg offsets for simplicity before, let's just use opposite phase
+        const leftArmSwing = isMoving ? Math.sin(walkCycle + Math.PI) * 3 : 0;
+        const rightArmSwing = isMoving ? Math.sin(walkCycle) * 3 : 0;
+        
+        ctx.fillRect(-9 + leftArmSwing, -8, 3, 14); 
+        ctx.fillRect(6 + rightArmSwing, -8, 3, 14);  
 
         // Hands
         ctx.fillStyle = '#fca5a5';
-        ctx.fillRect(-9, 6, 3, 3); ctx.fillRect(6, 6, 3, 3);
+        ctx.fillRect(-9 + leftArmSwing, 6, 3, 3); 
+        ctx.fillRect(6 + rightArmSwing, 6, 3, 3);
     }
 
     // Apron Overlay (If equipped)
@@ -511,9 +536,28 @@ const GameCanvas: React.FC = () => {
     ctx.save();
     ctx.translate(x, y);
     
-    // Suit Body (Black)
+    // Suit Body (Black/Dark Navy)
     ctx.fillStyle = '#0f172a'; 
     ctx.fillRect(-9, -25, 18, 25);
+
+    // --- LOUNGE SUIT DETAILS (Shirt & Tie) ---
+    // White Shirt (Triangle)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-4, -25); // Top Left Collar
+    ctx.lineTo(4, -25);  // Top Right Collar
+    ctx.lineTo(0, -15);  // Bottom V
+    ctx.fill();
+    
+    // Black Tie
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.moveTo(0, -24); // Knot top
+    ctx.lineTo(-1, -15); // Left side
+    ctx.lineTo(0, -12); // Bottom tip
+    ctx.lineTo(1, -15); // Right side
+    ctx.fill();
+    // ----------------------------------------
     
     // Head (Flesh)
     ctx.fillStyle = '#fca5a5';
@@ -582,6 +626,25 @@ const GameCanvas: React.FC = () => {
     // Suit Body (Dark)
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(-9, -25, 18, 25);
+
+    // --- LOUNGE SUIT DETAILS (Shirt & Tie) ---
+    // White Shirt (Triangle)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-4, -25); // Top Left Collar
+    ctx.lineTo(4, -25);  // Top Right Collar
+    ctx.lineTo(0, -15);  // Bottom V
+    ctx.fill();
+    
+    // Black Tie
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.moveTo(0, -24); // Knot top
+    ctx.lineTo(-1, -15); // Left side
+    ctx.lineTo(0, -12); // Bottom tip
+    ctx.lineTo(1, -15); // Right side
+    ctx.fill();
+    // ----------------------------------------
 
     // Head (Flesh)
     ctx.fillStyle = '#fca5a5';
@@ -1003,12 +1066,36 @@ const GameCanvas: React.FC = () => {
         ctx.restore();
 
         ctx.resetTransform();
-        const radius = Math.max(w, h) * 0.8;
-        const vignette = ctx.createRadialGradient(w/2, h/2, radius * 0.4, w/2, h/2, radius);
-        vignette.addColorStop(0, 'rgba(0,0,0,0)'); 
-        vignette.addColorStop(1, 'rgba(0,0,0,0.7)');
-        ctx.fillStyle = vignette;
-        ctx.fillRect(0, 0, w, h);
+        
+        // --- VISUAL EFFECTS ---
+        if (!isRestored) {
+            // BLINDFOLD EFFECT (Hoodwink)
+            // Simulates limited vision through a blindfold
+            const pCenterX = (player.x + player.width/2 - cameraRef.current.x) * scaleRatio;
+            const pCenterY = (player.y + player.height/2 - cameraRef.current.y) * scaleRatio;
+            
+            // Create a radial gradient centered on player
+            // Inner radius: somewhat visible
+            // Outer radius: pitch black
+            const visionRadius = Math.max(w, h) * 0.4; // How far they can see
+            const blindfold = ctx.createRadialGradient(pCenterX, pCenterY, 20 * scaleRatio, pCenterX, pCenterY, 300 * scaleRatio);
+            
+            blindfold.addColorStop(0, 'rgba(0, 0, 0, 0.3)'); // Center (Player visible but dim)
+            blindfold.addColorStop(0.3, 'rgba(0, 0, 0, 0.8)'); // Mid-range drops off
+            blindfold.addColorStop(1, 'rgba(0, 0, 0, 0.98)'); // Periphery is very dark
+            
+            ctx.fillStyle = blindfold;
+            ctx.fillRect(0, 0, w, h);
+        } else {
+            // NORMAL VIGNETTE
+            const radius = Math.max(w, h) * 0.8;
+            const vignette = ctx.createRadialGradient(w/2, h/2, radius * 0.4, w/2, h/2, radius);
+            vignette.addColorStop(0, 'rgba(0,0,0,0)'); 
+            vignette.addColorStop(1, 'rgba(0,0,0,0.7)');
+            ctx.fillStyle = vignette;
+            ctx.fillRect(0, 0, w, h);
+        }
+
     } catch (e) {
         console.error("Game Loop Error:", e);
     }
