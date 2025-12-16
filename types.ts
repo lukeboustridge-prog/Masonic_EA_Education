@@ -3,6 +3,7 @@ export interface Question {
   text: string;
   answers: string[];
   correctAnswer: string;
+  explanation?: string;
 }
 
 export interface Entity {

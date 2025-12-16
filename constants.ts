@@ -33,7 +33,8 @@ export const QUESTIONS: Question[] = [
       "To see that the Lodge is properly tyled.",
       "To sign the attendance book."
     ],
-    correctAnswer: "To see that the Lodge is properly tyled."
+    correctAnswer: "To see that the Lodge is properly tyled.",
+    explanation: "Source: Opening Ritual. The Junior Warden affirms it is the first care of every Freemason to see that the Lodge is properly tyled, a duty directed by the WM and performed by the Inner Guard."
   },
   {
     id: 2,
@@ -43,7 +44,8 @@ export const QUESTIONS: Question[] = [
       "The South",
       "The West"
     ],
-    correctAnswer: "The West"
+    correctAnswer: "The West",
+    explanation: "Source: Opening Ritual. The Senior Warden is placed in the West to mark the setting sun, to close the Lodge by command of the Worshipful Master, and to see that every Brother has had his due."
   },
   {
     id: 3,
@@ -53,7 +55,8 @@ export const QUESTIONS: Question[] = [
       "Wisdom, Strength, and Beauty.",
       "The Volume of the Sacred Law, the Square, and the Compasses."
     ],
-    correctAnswer: "The Volume of the Sacred Law, the Square, and the Compasses."
+    correctAnswer: "The Volume of the Sacred Law, the Square, and the Compasses.",
+    explanation: "Source: Ceremony of Initiation. These are the three great emblematical lights in Freemasonry. The Sacred Writings govern our faith, the Square regulates our actions, and the Compasses keep us within due bounds with all mankind."
   },
   {
     id: 4,
@@ -63,7 +66,8 @@ export const QUESTIONS: Question[] = [
       "The 24 ancient landmarks.",
       "The 24 elders of Israel."
     ],
-    correctAnswer: "The 24 hours of the day."
+    correctAnswer: "The 24 hours of the day.",
+    explanation: "Source: Working Tools. It represents the 24 hours of the day, part to be spent in prayer to Almighty God, part in labour and refreshment, and part in serving a friend or Brother in time of need."
   },
   {
     id: 5,
@@ -73,7 +77,8 @@ export const QUESTIONS: Question[] = [
       "From the Master to the Senior Warden.",
       "From the Secretary to the Treasurer."
     ],
-    correctAnswer: "From the Senior Warden to the Junior Warden."
+    correctAnswer: "From the Senior Warden to the Junior Warden.",
+    explanation: "Source: Opening Ritual. The Junior Deacon's duty is to carry all messages and communications of the Worshipful Master from the Senior to the Junior Warden."
   },
   {
     id: 6,
@@ -83,7 +88,8 @@ export const QUESTIONS: Question[] = [
       "The V.S.L., Square, and Compasses.",
       "The Tracing Board, and the Rough and Perfect Ashlars."
     ],
-    correctAnswer: "The Tracing Board, and the Rough and Perfect Ashlars."
+    correctAnswer: "The Tracing Board, and the Rough and Perfect Ashlars.",
+    explanation: "Source: Tracing Board Lecture. They are called 'Immovable Jewels' because they lie open and immovable in the Lodge for the Brethren to moralise upon."
   },
   {
     id: 7,
@@ -93,18 +99,19 @@ export const QUESTIONS: Question[] = [
       "To mark the setting sun and close the Lodge.",
       "To call the Brethren from labour to refreshment."
     ],
-    correctAnswer: "To mark the setting sun and close the Lodge."
+    correctAnswer: "To mark the setting sun and close the Lodge.",
+    explanation: "Source: Opening Ritual. As the sun sets in the West to close the day, so the Senior Warden is placed in the West to close the Lodge by the Worshipful Master's command."
   },
-  // Q8 replaced by chain Q801, Q802, Q803
   {
     id: 8,
-    text: "During the Rite of Destitution (Charity Charge) in the N.E. Corner, what is the candidate asked to deposit?",
+    text: "During the Rite of Destitution (Charity Charge), what is the candidate asked to deposit?",
     answers: [
       "A coin of the realm.",
       "Whatever he feels disposed to give.",
       "His metallic substances."
     ],
-    correctAnswer: "Whatever he feels disposed to give."
+    correctAnswer: "Whatever he feels disposed to give.",
+    explanation: "Source: Charge in North-East. The Candidate is asked to deposit whatever he feels disposed to give, to put his principles to the test and remind him of the moment he was received into Freemasonry poor and penniless."
   },
   {
     id: 801,
@@ -114,7 +121,8 @@ export const QUESTIONS: Question[] = [
       "To show my poverty.",
       "That I might bring nothing offensive or defensive into the Lodge."
     ],
-    correctAnswer: "That I might bring nothing offensive or defensive into the Lodge."
+    correctAnswer: "That I might bring nothing offensive or defensive into the Lodge.",
+    explanation: "Source: Reasons for Preparation. You were divested of all metals... to show that you had no weapon of offence or defence about you."
   },
   {
     id: 802,
@@ -124,17 +132,19 @@ export const QUESTIONS: Question[] = [
       "There was not heard the sound of any axe, hammer, or other metal tool.",
       "The stones were cut in the quarry using lasers."
     ],
-    correctAnswer: "There was not heard the sound of any axe, hammer, or other metal tool."
+    correctAnswer: "There was not heard the sound of any axe, hammer, or other metal tool.",
+    explanation: "Source: Reasons for Preparation. At the building of King Solomon's Temple, there was not heard the sound of any hammer or other implement of iron, the materials being prepared in the quarries and forest."
   },
   {
     id: 9,
-    text: "The \"Rough Ashlar\" represents man in his infant or primitive state. What represents the mind of man in the decline of his years?",
+    text: "The \"Rough Ashlar\" represents man in his infant state. What represents the mind of man in the decline of his years?",
     answers: [
       "The Perfect Ashlar.",
       "The Smooth Ashlar.",
       "The Cornerstone."
     ],
-    correctAnswer: "The Perfect Ashlar."
+    correctAnswer: "The Perfect Ashlar.",
+    explanation: "Source: Tracing Board Lecture. The Perfect Ashlar represents the mind of man in the decline of his years, after a life well spent in acts of piety and virtue."
   },
   {
     id: 10,
@@ -144,7 +154,8 @@ export const QUESTIONS: Question[] = [
       "The Golden Fleece or Roman Eagle.",
       "The Sword and Trowel."
     ],
-    correctAnswer: "The Golden Fleece or Roman Eagle."
+    correctAnswer: "The Golden Fleece or Roman Eagle.",
+    explanation: "Source: Presentation of Apron. It is more ancient than the Golden Fleece or Roman Eagle, more honourable than the Garter... being the Badge of Innocence and the Bond of Friendship."
   },
   {
     id: 11,
@@ -154,7 +165,8 @@ export const QUESTIONS: Question[] = [
       "Ionic",
       "Corinthian"
     ],
-    correctAnswer: "Ionic"
+    correctAnswer: "Ionic",
+    explanation: "Source: Tracing Board Lecture. The three great pillars are of the Ionic, Doric, and Corinthian orders, symbolising Wisdom, Strength, and Beauty respectively."
   },
   {
     id: 12,
@@ -164,17 +176,19 @@ export const QUESTIONS: Question[] = [
       "Strength.",
       "Beauty."
     ],
-    correctAnswer: "Strength."
+    correctAnswer: "Strength.",
+    explanation: "Source: Tracing Board Lecture. Lewis denotes Strength. It also denotes the son of a Mason, whose duty is to bear the heat and burden of the day for his aged parents."
   },
   {
     id: 13,
-    text: "In the ancient biblical custom referred to regarding the candidate's preparation (slipshod), what did removing a shoe signify?",
+    text: "In the ancient biblical custom regarding the candidate's preparation (slipshod), what did removing a shoe signify?",
     answers: [
       "Humility before God.",
       "Entering holy ground.",
       "The ratification of a bargain."
     ],
-    correctAnswer: "The ratification of a bargain."
+    correctAnswer: "The ratification of a bargain.",
+    explanation: "Source: Reasons for Preparation. The slipshod preparation was in allusion to an ancient Biblical custom in the ratification of a bargain (Ruth iv., 7)."
   },
   {
     id: 14,
@@ -184,7 +198,8 @@ export const QUESTIONS: Question[] = [
       "Hiram, King of Tyre.",
       "Hiram Abif."
     ],
-    correctAnswer: "Hiram Abif."
+    correctAnswer: "Hiram Abif.",
+    explanation: "Source: Tracing Board Lecture. Hiram Abif represents the pillar of Beauty for his curious and masterly workmanship in beautifying and adorning the Temple."
   },
   {
     id: 15,
@@ -194,7 +209,8 @@ export const QUESTIONS: Question[] = [
       "Secrecy, Fidelity, and Obedience.",
       "Virtue, Honour, and Mercy."
     ],
-    correctAnswer: "Virtue, Honour, and Mercy."
+    correctAnswer: "Virtue, Honour, and Mercy.",
+    explanation: "Source: Tracing Board Lecture. The distinguishing characteristics of a good Freemason are Virtue, Honour, and Mercy, and may they ever be found in a Freemason's breast."
   },
   {
     id: 16,
@@ -204,7 +220,8 @@ export const QUESTIONS: Question[] = [
       "They are worn by the Master and Wardens and transferable to successors.",
       "They are carried by the Deacons during the procession."
     ],
-    correctAnswer: "They are worn by the Master and Wardens and transferable to successors."
+    correctAnswer: "They are worn by the Master and Wardens and transferable to successors.",
+    explanation: "Source: Tracing Board Lecture. They are called Movable Jewels because they are worn by the Master and his Wardens, and are transferable to their successors on the day of Installation."
   },
   {
     id: 17,
@@ -214,37 +231,41 @@ export const QUESTIONS: Question[] = [
       "A Blazing Star.",
       "The Heavens."
     ],
-    correctAnswer: "The Heavens."
+    correctAnswer: "The Heavens.",
+    explanation: "Source: Tracing Board Lecture. The Ladder reaches to the heavens, and rests on the V.S.L., because by the doctrines contained in that Holy Book we are taught to believe in Divine Providence."
   },
   {
     id: 18,
-    text: "In the \"First Grand Offering\" which consecrated the ground of the Lodge, what did the Almighty substitute for Isaac?",
+    text: "In the \"First Grand Offering\", what did the Almighty substitute for Isaac?",
     answers: [
       "A Lamb.",
       "A more agreeable victim.",
       "A Ram caught in a thicket."
     ],
-    correctAnswer: "A more agreeable victim."
+    correctAnswer: "A more agreeable victim.",
+    explanation: "Source: Tracing Board Lecture. It pleased the Almighty to substitute a more agreeable victim in his stead (traditionally a ram caught in a thicket)."
   },
   {
     id: 19,
-    text: "The \"Ornaments\" of the Lodge are the Mosaic Pavement, the Blazing Star, and the Indented Border. What does the \"Indented Border\" refer to?",
+    text: "What does the \"Indented Border\" refer to?",
     answers: [
       "The bond of friendship.",
       "The manifold blessings of nature.",
       "The Planets in their various revolutions."
     ],
-    correctAnswer: "The Planets in their various revolutions."
+    correctAnswer: "The Planets in their various revolutions.",
+    explanation: "Source: Tracing Board Lecture. The Indented or Tesselated Border refers to the Planets, which in their various revolutions form a beautiful border round that grand luminary, the Sun."
   },
   {
     id: 20,
-    text: "When discussing the \"Secrets\" of this degree, the Worshipful Master states that the \"Grip or Token\" demands a \"Word\". How must this Word be given?",
+    text: "How must the \"Word\" be given?",
     answers: [
       "At length, but only in a whisper.",
       "Never at length (except in open Lodge), but always by letters or syllables.",
       "By halving it with a Brother."
     ],
-    correctAnswer: "Never at length (except in open Lodge), but always by letters or syllables."
+    correctAnswer: "Never at length (except in open Lodge), but always by letters or syllables.",
+    explanation: "Source: Secrets of the Degree. You must never give it at length (except in open Lodge), but always by letters or syllables, teaching caution."
   }
 ];
 
