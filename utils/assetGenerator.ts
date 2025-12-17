@@ -13,9 +13,11 @@ export const generateSpriteUrl = (key: string): string => {
   const canvas = document.createElement('canvas');
   
   const isPillar = key.startsWith('pillar');
-  // 32x32 for icons, 40x160 for pillars
+  const isNPC = ['worshipful_master', 'senior_warden', 'junior_warden', 'inner_guard'].includes(key);
+
+  // 32x32 for icons, 40x160 for pillars, 32x48 for NPCs (to match 45px Player)
   canvas.width = isPillar ? 40 : 32;
-  canvas.height = isPillar ? 160 : 32;
+  canvas.height = isPillar ? 160 : (isNPC ? 48 : 32);
   
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
@@ -25,7 +27,7 @@ export const generateSpriteUrl = (key: string): string => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
+  const cy = canvas.height / 2; 
 
   // Drawing Helpers
   const fillRect = (x: number, y: number, w: number, h: number, c: string) => { 
@@ -33,261 +35,253 @@ export const generateSpriteUrl = (key: string): string => {
       ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h)); 
   };
 
+  // Colors based on provided images
+  const C_TURQUOISE = '#2dd4bf'; // Cambridge Blue / Teal
+  const C_TURQUOISE_DARK = '#0f766e'; // Texture for rosettes
+  const C_SILVER = '#cbd5e1'; // Metal/Chains
+  const C_SUIT = '#0f172a'; // Dark Navy/Black
+  const C_FLESH = '#fca5a5';
+  const C_WHITE = '#f8fafc';
+
   switch(key) {
-    case 'gauge': // 24 Inch Gauge
+    case 'gauge': 
         ctx.translate(cx, cy); ctx.rotate(-Math.PI / 4);
-        // Body (Gold/Wood)
-        fillRect(-14, -4, 28, 8, '#fbbf24'); // Amber 400
-        fillRect(-14, -4, 28, 2, '#fcd34d'); // Highlight
-        fillRect(-14, 2, 28, 2, '#d97706');  // Shadow
-        // Ticks
+        fillRect(-14, -4, 28, 8, '#fbbf24'); 
+        fillRect(-14, -4, 28, 2, '#fcd34d');
+        fillRect(-14, 2, 28, 2, '#d97706');
         ctx.fillStyle = '#78350f'; 
         for(let i=-12; i<=12; i+=4) ctx.fillRect(i, -4, 1, 4);
         break;
 
-    case 'gavel': // Common Gavel
+    case 'gavel': 
         ctx.translate(cx, cy); ctx.rotate(-Math.PI / 4);
-        
-        // Handle (Dark Wood)
         fillRect(-2, 0, 4, 14, '#78350f'); 
-        
-        // Head (Wood - Setting Maul/Gavel Style)
-        // Main Block (Rich Wood)
         ctx.fillStyle = '#92400e'; 
         ctx.beginPath();
-        // Mallet shape: wider in middle, tapered slightly or cylindrical
-        ctx.moveTo(-4, -12); ctx.lineTo(-10, -10); ctx.lineTo(-10, -2); ctx.lineTo(-4, 0); // Striking Face
-        ctx.lineTo(4, 0); ctx.lineTo(10, -2); ctx.lineTo(10, -10); ctx.lineTo(4, -12); // Back Face
+        ctx.moveTo(-4, -12); ctx.lineTo(-10, -10); ctx.lineTo(-10, -2); ctx.lineTo(-4, 0); 
+        ctx.lineTo(4, 0); ctx.lineTo(10, -2); ctx.lineTo(10, -10); ctx.lineTo(4, -12);
         ctx.closePath();
         ctx.fill();
-
-        // Highlight/Grain
-        ctx.fillStyle = '#b45309'; 
-        ctx.fillRect(-8, -9, 16, 2);
+        ctx.fillStyle = '#b45309'; ctx.fillRect(-8, -9, 16, 2);
         break;
 
-    case 'chisel': // Chisel
+    case 'chisel': 
         ctx.translate(cx, cy); ctx.rotate(Math.PI / 4);
-        // Handle
         fillRect(-2, -10, 4, 10, '#78350f'); 
-        // Blade (Steel)
         fillRect(-2, 0, 4, 12, '#94a3b8'); 
-        // Beveled Edge
         ctx.beginPath(); ctx.moveTo(-2, 12); ctx.lineTo(2, 12); ctx.lineTo(0, 15); 
         ctx.fillStyle = '#cbd5e1'; ctx.fill();
         break;
 
-    case 'rough_ashlar': // Rough Ashlar
-        // Base Block
+    case 'rough_ashlar': 
         fillRect(4, 8, 24, 20, '#475569'); 
-        // Rough Texture details
-        ctx.fillStyle = '#1e293b'; // Dark cracks
+        ctx.fillStyle = '#1e293b'; 
         ctx.beginPath(); ctx.moveTo(4, 8); ctx.lineTo(10, 12); ctx.lineTo(4, 16); ctx.fill();
         ctx.beginPath(); ctx.moveTo(28, 28); ctx.lineTo(22, 24); ctx.lineTo(28, 20); ctx.fill();
-        // Highlight Edge
         fillRect(6, 8, 18, 2, '#64748b');
         break;
 
-    case 'perfect_ashlar': // Perfect Ashlar
-        // Cube
+    case 'perfect_ashlar': 
         fillRect(6, 8, 20, 20, '#cbd5e1'); 
-        // Outline
         ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1;
         ctx.strokeRect(6.5, 8.5, 19, 19);
-        // Lewis (Hook) on top
         ctx.fillStyle = '#1e293b';
-        ctx.fillRect(14, 4, 4, 4); // Base of hook
-        ctx.beginPath(); ctx.arc(16, 4, 3, Math.PI, 0); ctx.stroke(); // Loop
+        ctx.fillRect(14, 4, 4, 4); 
+        ctx.beginPath(); ctx.arc(16, 4, 3, Math.PI, 0); ctx.stroke(); 
         break;
 
-    case 'ladder': // Jacob's Ladder
-        // Rails
+    case 'ladder': 
         fillRect(8, 2, 3, 28, '#854d0e'); 
         fillRect(21, 2, 3, 28, '#854d0e');
-        // Rungs
         ctx.fillStyle = '#ca8a04';
         for(let y=6; y<28; y+=6) fillRect(8, y, 16, 2, '#ca8a04');
         break;
 
-    case 'apron': // Masonic Apron
+    case 'apron': // Item Icon
         ctx.translate(cx, cy);
-        
-        // Strings/Belt
-        ctx.strokeStyle = '#f8fafc';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-16, -8); ctx.lineTo(16, -8); // Waist string
-        ctx.stroke();
-
-        // Main Body (White Square)
-        ctx.fillStyle = '#ffffff'; 
-        ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowBlur = 4;
+        ctx.strokeStyle = C_WHITE; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-16, -8); ctx.lineTo(16, -8); ctx.stroke();
+        ctx.fillStyle = C_WHITE; 
         ctx.fillRect(-11, -8, 22, 18);
-        ctx.shadowBlur = 0;
-        
-        // Border/Outline
-        ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+        ctx.strokeStyle = C_TURQUOISE; ctx.lineWidth = 2; // Turquoise Border
         ctx.strokeRect(-11, -8, 22, 18);
-
-        // Flap (Triangle DOWN for NZ Style)
-        ctx.beginPath(); 
-        ctx.moveTo(-11, -8); 
-        ctx.lineTo(11, -8); 
-        ctx.lineTo(0, 2); // Points Down into the apron body
-        ctx.closePath();
-        ctx.fillStyle = '#ffffff'; 
-        ctx.fill(); 
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-11, -8); ctx.lineTo(11, -8); ctx.lineTo(0, 2); ctx.closePath();
+        ctx.fillStyle = C_WHITE; ctx.fill(); ctx.stroke();
+        // Rosettes
+        ctx.fillStyle = C_TURQUOISE;
+        ctx.beginPath(); ctx.arc(-5, 5, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(5, 5, 2, 0, Math.PI*2); ctx.fill();
         break;
         
-    case 'worshipful_master': // The Master Icon (NZ Style - Installed Master)
-        ctx.translate(cx, cy);
+    case 'worshipful_master': 
+        // 32x48 Canvas
+        // Head (Center 16, y=6)
+        ctx.fillStyle = C_FLESH; ctx.beginPath(); ctx.arc(16, 6, 6, 0, Math.PI*2); ctx.fill();
+        // Hair (Grey/White sides, balding)
+        ctx.fillStyle = '#e2e8f0'; ctx.fillRect(10, 4, 3, 6); ctx.fillRect(19, 4, 3, 6);
         
-        // Head (Balding)
-        ctx.fillStyle = '#fca5a5'; // Face
-        ctx.beginPath(); ctx.arc(0, -6, 9, 0, Math.PI*2); ctx.fill();
+        // Suit Body (Torso: 12 to 34)
+        ctx.fillStyle = C_SUIT; ctx.fillRect(8, 12, 16, 22);
         
-        // Facial Features
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(-3, -7, 2, 2); // Left Eye
-        ctx.fillRect(1, -7, 2, 2);  // Right Eye
+        // Legs (34 to 46)
+        ctx.fillRect(9, 34, 6, 12); ctx.fillRect(17, 34, 6, 12);
+        
+        // Shoes
+        ctx.fillStyle = '#000000'; ctx.fillRect(8, 46, 7, 2); ctx.fillRect(17, 46, 7, 2);
+        
+        // Arms
+        ctx.fillStyle = C_SUIT; ctx.fillRect(5, 13, 3, 16); ctx.fillRect(24, 13, 3, 16);
+        // Hands
+        ctx.fillStyle = C_FLESH; ctx.fillRect(5, 29, 3, 3); ctx.fillRect(24, 29, 3, 3);
+        
+        // Collar (Turquoise)
+        ctx.strokeStyle = C_TURQUOISE; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(11, 14); ctx.lineTo(16, 24); ctx.lineTo(21, 14); ctx.stroke();
+        
+        // Jewel (Square - Silver)
+        ctx.strokeStyle = C_SILVER; ctx.lineWidth = 1.5;
+        ctx.strokeRect(13, 24, 6, 6);
 
-        // Hair (White sides)
-        ctx.fillStyle = '#e2e8f0'; 
-        ctx.fillRect(-10, -8, 3, 8); 
-        ctx.fillRect(7, -8, 3, 8);
+        // --- INSTALLED MASTER APRON ---
+        // Body
+        ctx.fillStyle = C_WHITE; ctx.fillRect(9, 22, 14, 11);
+        // Border
+        ctx.strokeStyle = C_TURQUOISE; ctx.lineWidth = 2; ctx.strokeRect(9, 22, 14, 11);
         
+        // Silver Chains (Tassels) hanging from "buttons"
+        ctx.fillStyle = C_SILVER;
+        // Left Chain
+        ctx.fillRect(10, 24, 2, 5); 
+        // Right Chain
+        ctx.fillRect(20, 24, 2, 5);
+
+        // Inverted Taus (Silver) - 3 of them (Left, Right, Center/Flap implied)
+        ctx.fillStyle = C_SILVER;
+        // Left Bottom Tau (Upside down T)
+        ctx.fillRect(10, 30, 3, 1); ctx.fillRect(11, 29, 1, 2);
+        // Right Bottom Tau
+        ctx.fillRect(19, 30, 3, 1); ctx.fillRect(20, 29, 1, 2);
+        // Center/Top Tau (Small)
+        ctx.fillRect(14.5, 24, 3, 1); ctx.fillRect(15.5, 23, 1, 2);
+        break;
+
+    case 'junior_warden': 
+    case 'inner_guard': 
+    case 'senior_warden':
+        const role = key;
+        
+        // Head
+        ctx.fillStyle = C_FLESH; ctx.beginPath(); ctx.arc(16, 6, 6, 0, Math.PI*2); ctx.fill();
+        
+        // Hair
+        if (role === 'senior_warden') {
+            ctx.fillStyle = '#94a3b8'; // Grey
+            ctx.beginPath(); ctx.arc(16, 5, 6, Math.PI, 0); ctx.fill();
+        } else {
+            ctx.fillStyle = '#78350f'; // Brown
+            ctx.beginPath(); ctx.arc(16, 5, 6, Math.PI, 0); ctx.fill();
+        }
+
         // Suit Body
-        fillRect(-12, 4, 24, 12, '#0f172a');
+        ctx.fillStyle = C_SUIT; ctx.fillRect(8, 12, 16, 22);
+        // Legs
+        ctx.fillRect(9, 34, 6, 12); ctx.fillRect(17, 34, 6, 12);
+        // Shoes
+        ctx.fillStyle = '#000000'; ctx.fillRect(8, 46, 7, 2); ctx.fillRect(17, 46, 7, 2);
+        // Arms
+        ctx.fillStyle = C_SUIT; ctx.fillRect(5, 13, 3, 16); ctx.fillRect(24, 13, 3, 16);
+        // Hands
+        ctx.fillStyle = C_FLESH; ctx.fillRect(5, 29, 3, 3); ctx.fillRect(24, 29, 3, 3);
 
-        // --- LOUNGE SUIT DETAILS (Icon) ---
-        // White Shirt (Triangle)
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.moveTo(-4, 4); ctx.lineTo(4, 4); ctx.lineTo(0, 8); ctx.fill();
-        // Black Tie
-        ctx.fillStyle = '#000000';
-        ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(-1, 8); ctx.lineTo(0, 10); ctx.lineTo(1, 8); ctx.fill();
-        // ---------------------------------
-        
-        // Collar (Light Blue)
-        ctx.strokeStyle = '#38bdf8'; // Sky Blue
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(0, 14); ctx.lineTo(10, 4); ctx.stroke();
-        
-        // Jewel (Square, Chevron UP ^ )
-        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
-        ctx.beginPath(); 
-        // Draw ^ shape at bottom of collar
-        ctx.moveTo(-4, 18); ctx.lineTo(0, 14); ctx.lineTo(4, 18); 
-        ctx.stroke();
+        // Collar (Turquoise)
+        ctx.strokeStyle = C_TURQUOISE; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(11, 14); ctx.lineTo(16, 24); ctx.lineTo(21, 14); ctx.stroke();
 
-        // Installed Master Apron Elements (Taus / Levels - Inverted T)
-        // Shifted up to avoid border overlap
-        ctx.fillStyle = '#38bdf8';
-        // Left Inverted Tau
-        ctx.fillRect(-6, 11, 3, 1); // Bottom bar (Shifted up from 12)
-        ctx.fillRect(-5, 9, 1, 3); // Stem up
-        // Right Inverted Tau
-        ctx.fillRect(4, 11, 3, 1); // Bottom bar
-        ctx.fillRect(5, 9, 1, 3); // Stem up
+        // Jewel (Silver)
+        ctx.strokeStyle = C_SILVER; ctx.lineWidth = 1.5;
+        if (role === 'inner_guard') {
+            // Crossed Swords
+            ctx.beginPath(); ctx.moveTo(14, 24); ctx.lineTo(18, 29); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(18, 24); ctx.lineTo(14, 29); ctx.stroke();
+        } else if (role === 'junior_warden') {
+            // Plumb Rule
+            ctx.beginPath(); ctx.moveTo(16, 24); ctx.lineTo(16, 30); ctx.stroke();
+            // Bob
+            ctx.beginPath(); ctx.arc(16, 31, 1, 0, Math.PI*2); ctx.stroke();
+        } else if (role === 'senior_warden') {
+            // Level
+            ctx.beginPath(); ctx.moveTo(13, 28); ctx.lineTo(19, 28); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(16, 28); ctx.lineTo(16, 25); ctx.stroke();
+        }
+
+        // --- MASTER MASON APRON ---
+        // Body
+        ctx.fillStyle = C_WHITE; ctx.fillRect(9, 22, 14, 11);
+        // Border
+        ctx.strokeStyle = C_TURQUOISE; ctx.lineWidth = 2; ctx.strokeRect(9, 22, 14, 11);
+        
+        // Silver Chains (Tassels)
+        ctx.fillStyle = C_SILVER;
+        ctx.fillRect(10, 24, 2, 5); // Left
+        ctx.fillRect(20, 24, 2, 5); // Right
+
+        // Rosettes (Turquoise Circles with texture)
+        ctx.fillStyle = C_TURQUOISE;
+        // Bottom Left
+        ctx.beginPath(); ctx.arc(11, 30, 2, 0, Math.PI*2); ctx.fill();
+        // Bottom Right
+        ctx.beginPath(); ctx.arc(21, 30, 2, 0, Math.PI*2); ctx.fill();
+        // Inner texture for rosette
+        ctx.fillStyle = C_TURQUOISE_DARK;
+        ctx.fillRect(10.5, 29.5, 1, 1); ctx.fillRect(20.5, 29.5, 1, 1);
         break;
 
-    case 'junior_warden': // Junior Warden Icon (Master Mason Apron, Plumb Rule)
+    case 'tassel':
         ctx.translate(cx, cy);
-        
-        // Head (Brown hair)
-        ctx.fillStyle = '#fca5a5'; 
-        ctx.beginPath(); ctx.arc(0, -6, 8, 0, Math.PI*2); ctx.fill();
-        
-        // Facial Features
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(-3, -7, 2, 2); // Left Eye
-        ctx.fillRect(1, -7, 2, 2);  // Right Eye
-
-        // Hair (Dark Brown - Natural, not headband)
-        ctx.fillStyle = '#78350f'; 
-        // Draw hair cap
-        ctx.beginPath(); 
-        ctx.arc(0, -6, 8, Math.PI, 0); // Top half
-        ctx.lineTo(8, -4); 
-        ctx.lineTo(6, -4);
-        ctx.lineTo(-6, -4);
-        ctx.lineTo(-8, -4);
-        ctx.fill();
-        
-        // Suit
-        fillRect(-12, 4, 24, 12, '#0f172a');
-
-        // --- LOUNGE SUIT DETAILS (Icon) ---
-        // White Shirt (Triangle)
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.moveTo(-4, 4); ctx.lineTo(4, 4); ctx.lineTo(0, 8); ctx.fill();
-        // Black Tie
-        ctx.fillStyle = '#000000';
-        ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(-1, 8); ctx.lineTo(0, 10); ctx.lineTo(1, 8); ctx.fill();
-        // ---------------------------------
-        
-        // Collar (Light Blue)
-        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(0, 14); ctx.lineTo(10, 4); ctx.stroke();
-
-        // Jewel: Plumb Rule (Vertical Line + Bob)
-        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(0, 14); ctx.lineTo(0, 20); ctx.stroke();
-        ctx.beginPath(); ctx.arc(0, 20, 1.5, 0, Math.PI*2); ctx.stroke();
-
-        // MM Apron Rosettes (Simulated)
-        ctx.fillStyle = '#38bdf8';
-        ctx.beginPath(); ctx.arc(-4, 12, 1, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(4, 12, 1, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(0, 0); ctx.stroke();
+        ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(0, 2, 3, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(-2, 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, 11); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(2, 10); ctx.stroke();
         break;
 
-    case 'square_compass': // Logo/Checkpoint
+    case 'square_compass': 
         ctx.translate(cx, cy);
-        // Compass (Points Down) - Gold
         ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
         ctx.beginPath(); ctx.moveTo(-8, 9); ctx.lineTo(0, -9); ctx.lineTo(8, 9); ctx.stroke();
-        // Square (Angle Down) - Silver/Steel
-        ctx.strokeStyle = '#cbd5e1'; 
+        ctx.strokeStyle = C_SILVER; 
         ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(0, 6); ctx.lineTo(10, -3); ctx.stroke();
         break;
 
-    case 'pillar_ionic': // Wisdom
-        // Base
-        fillRect(4, 140, 32, 20, '#cbd5e1');
-        // Shaft (Gradient)
+    case 'pillar_ionic': 
+        fillRect(4, 140, 32, 20, C_SILVER);
         const gI = ctx.createLinearGradient(6,0,34,0);
         gI.addColorStop(0, '#94a3b8'); gI.addColorStop(0.5, '#f1f5f9'); gI.addColorStop(1, '#94a3b8');
         ctx.fillStyle = gI; ctx.fillRect(6, 25, 28, 115);
-        // Capital (Volutes/Scrolls)
-        fillRect(2, 10, 36, 15, '#cbd5e1');
+        fillRect(2, 10, 36, 15, C_SILVER);
         ctx.fillStyle = '#64748b';
         ctx.beginPath(); ctx.arc(10, 18, 5, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(30, 18, 5, 0, Math.PI*2); ctx.fill();
         break;
 
-    case 'pillar_doric': // Strength
-        // Base
-        fillRect(4, 140, 32, 20, '#cbd5e1');
-        // Shaft
+    case 'pillar_doric': 
+        fillRect(4, 140, 32, 20, C_SILVER);
         const gD = ctx.createLinearGradient(6,0,34,0);
         gD.addColorStop(0, '#94a3b8'); gD.addColorStop(0.5, '#f1f5f9'); gD.addColorStop(1, '#94a3b8');
         ctx.fillStyle = gD; ctx.fillRect(6, 20, 28, 120);
-        // Capital (Simple Slab)
-        fillRect(2, 10, 36, 10, '#cbd5e1');
+        fillRect(2, 10, 36, 10, C_SILVER);
         fillRect(4, 20, 32, 5, '#94a3b8');
         break;
 
-    case 'pillar_corinthian': // Beauty
-        // Base
-        fillRect(4, 140, 32, 20, '#cbd5e1');
-        // Shaft
+    case 'pillar_corinthian': 
+        fillRect(4, 140, 32, 20, C_SILVER);
         const gC = ctx.createLinearGradient(6,0,34,0);
         gC.addColorStop(0, '#94a3b8'); gC.addColorStop(0.5, '#f1f5f9'); gC.addColorStop(1, '#94a3b8');
         ctx.fillStyle = gC; ctx.fillRect(6, 35, 28, 105);
-        // Capital (Ornate Leaves)
-        fillRect(4, 5, 32, 30, '#cbd5e1');
-        ctx.fillStyle = '#64748b'; // Leaf details
+        fillRect(4, 5, 32, 30, C_SILVER);
+        ctx.fillStyle = '#64748b'; 
         ctx.beginPath(); ctx.moveTo(4, 35); ctx.lineTo(4, 15); ctx.lineTo(10, 25); ctx.fill();
         ctx.beginPath(); ctx.moveTo(36, 35); ctx.lineTo(36, 15); ctx.lineTo(30, 25); ctx.fill();
         ctx.beginPath(); ctx.moveTo(18, 35); ctx.lineTo(20, 15); ctx.lineTo(22, 35); ctx.fill();

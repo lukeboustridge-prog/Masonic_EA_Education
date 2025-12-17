@@ -24,6 +24,50 @@ export const CHECKPOINTS = [
   { x: 6900, yOffset: 0 }  // Final Stretch
 ];
 
+// NPC Locations
+export const NPC_CONFIG = {
+  INNER_GUARD: { x: 200, yOffset: 0 },
+  // Master must be met BEFORE the first Apron orb (which is at x: 550 now)
+  MASTER: { x: 350, yOffset: 0 }, 
+  JUNIOR_WARDEN: { x: 2700, yOffset: -100 },
+  SENIOR_WARDEN: { x: 7800, yOffset: 0 },
+};
+
+// Tassels (Cardinal Virtues) - Located in safe zones (Centered on Platforms)
+export const TASSELS = [
+  { 
+    id: 101, 
+    name: "Temperance", 
+    x: 875, yOffset: -300, // Safe: Platform at 800, width 150. Center is 875.
+    blurb: "Temperance is that due restraint upon our affections and passions which renders the body tame and governable, and frees the mind from the allurements of vice."
+  }, 
+  { 
+    id: 102, 
+    name: "Fortitude", 
+    x: 1500, yOffset: -500, // Safe: Platform at 1450, width 100. Center is 1500.
+    blurb: "Fortitude is that noble and steady purpose of the mind, whereby we are enabled to undergo any pain, peril, or danger, when prudentially deemed expedient."
+  }, 
+  { 
+    id: 103, 
+    name: "Prudence", 
+    x: 4100, yOffset: 0, // Safe: Platform at 4000, width 200. Center is 4100.
+    blurb: "Prudence teaches us to regulate our lives and actions agreeably to the dictates of reason, and is that habit by which we wisely judge."
+  }, 
+  { 
+    id: 104, 
+    name: "Justice", 
+    x: 6050, yOffset: -550, // Safe: Platform at 6000, width 100. Center is 6050.
+    blurb: "Justice is that station or boundary of right which enables us to render to every man his just due without distinction."
+  } 
+];
+
+// Jacob's Ladder Visuals
+export const JACOBS_LADDER_LABELS = [
+  { text: "FAITH", x: 5150, yOffset: -200 },
+  { text: "HOPE", x: 5150, yOffset: -400 },
+  { text: "CHARITY", x: 5150, yOffset: -600 }
+];
+
 export const QUESTIONS: Question[] = [
   {
     id: 1,
@@ -315,7 +359,7 @@ export const PLATFORM_DATA = [
   { x: 4750, yOffset: -50, width: 80, height: 20, color: '#94a3b8' },
   { x: 4900, yOffset: -50, width: 80, height: 20, color: '#94a3b8' },
 
-  // --- SECTION 6: The High Tower (The hardest climb) ---
+  // --- SECTION 6: The High Tower (Jacob's Ladder) ---
   { x: 5100, yOffset: 0, width: 200, height: 600, color: '#64748b' },
   { x: 5150, yOffset: -150, width: 80, height: 20, color: '#94a3b8' },
   { x: 5350, yOffset: -250, width: 80, height: 20, color: '#94a3b8' },
@@ -385,10 +429,11 @@ const TOOLS = {
 export const ORB_DATA: OrbDefinition[] = [
   // --- Start / Preparation ---
   // Orb 1: The First Apron (No Question, Instructional)
+  // MOVED further along (x: 550) so player hits Master NPC (x: 350) first
   { 
     id: 1, 
-    x: 400, 
-    yOffset: -50, 
+    x: 550, 
+    yOffset: -80, // On the first small step up
     radius: 20, 
     ...TOOLS.APRON,
     blurb: "The Lambskin Apron is the badge of innocence and the bond of friendship. It is the first gift bestowed upon you. You are now permitted to wear it."

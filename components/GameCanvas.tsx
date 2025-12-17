@@ -3,7 +3,7 @@ import { GameState, Player, Orb, Platform, Question, LeaderboardEntry } from '..
 import { 
   GRAVITY, FRICTION, MOVE_SPEED, JUMP_FORCE, 
   WORLD_WIDTH, PLATFORM_DATA, ORB_DATA, GOAL_X, QUESTIONS,
-  DESIGN_HEIGHT, CHECKPOINTS
+  DESIGN_HEIGHT, CHECKPOINTS, NPC_CONFIG, TASSELS, JACOBS_LADDER_LABELS
 } from '../constants';
 import QuizModal from './QuizModal';
 import LoreModal from './LoreModal';
@@ -31,6 +31,8 @@ const GameCanvas: React.FC = () => {
   
   // Player Identity & Leaderboard
   const [playerName, setPlayerName] = useState('');
+  const [showNameInput, setShowNameInput] = useState(false); // New modal trigger
+  const [tempName, setTempName] = useState(''); // For input field
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
@@ -42,6 +44,9 @@ const GameCanvas: React.FC = () => {
   const [hasApron, setHasApron] = useState(false);
   const [isRestored, setIsRestored] = useState(false); // Track if Master has restored comforts
   
+  // New Tassel Collection State
+  const [collectedTassels, setCollectedTassels] = useState<Set<number>>(new Set());
+
   // JW Interaction State (0: Start, 1: Q801 done, 2: Q802 done, 3: Completed)
   const [jwProgress, setJwProgress] = useState(0);
 
@@ -142,12 +147,15 @@ const GameCanvas: React.FC = () => {
   useEffect(() => {
     const uniqueKeys = Array.from(new Set(ORB_DATA.map(o => o.spriteKey)));
     
-    // We explicitly include 'square_compass', 'worshipful_master', and 'junior_warden'
+    // We explicitly include NPC sprites and Tassels
     const assetsToLoad = [
         ...uniqueKeys,
         'square_compass', 
         'worshipful_master',
         'junior_warden',
+        'inner_guard',
+        'senior_warden',
+        'tassel',
         'pillar_ionic', 
         'pillar_doric', 
         'pillar_corinthian'
@@ -316,7 +324,6 @@ const GameCanvas: React.FC = () => {
   };
 
   // --- DRAWING HELPERS ---
-  // (Helpers omitted for brevity, they remain unchanged)
   const drawStoneBlock = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) => {
     ctx.fillStyle = '#cbd5e1'; 
     ctx.fillRect(x, y, w, h);
@@ -540,170 +547,23 @@ const GameCanvas: React.FC = () => {
     ctx.restore();
   };
 
-  const drawMaster = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
-    ctx.save();
-    ctx.translate(x, y);
-    
-    // Suit Body (Black/Dark Navy)
-    ctx.fillStyle = '#0f172a'; 
-    ctx.fillRect(-9, -25, 18, 25);
-
-    // --- LOUNGE SUIT DETAILS (Shirt & Tie) ---
-    // White Shirt (Triangle)
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-4, -25); // Top Left Collar
-    ctx.lineTo(4, -25);  // Top Right Collar
-    ctx.lineTo(0, -15);  // Bottom V
-    ctx.fill();
-    
-    // Black Tie
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.moveTo(0, -24); // Knot top
-    ctx.lineTo(-1, -15); // Left side
-    ctx.lineTo(0, -12); // Bottom tip
-    ctx.lineTo(1, -15); // Right side
-    ctx.fill();
-    // ----------------------------------------
-    
-    // Head (Flesh)
-    ctx.fillStyle = '#fca5a5';
-    ctx.beginPath(); ctx.arc(0, -34, 8, 0, Math.PI*2); ctx.fill();
-    
-    // Facial Features (Eyes)
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(-3, -35, 2, 2); // Left Eye
-    ctx.fillRect(1, -35, 2, 2);  // Right Eye
-
-    // Hair (White/Grey Balding)
-    ctx.fillStyle = '#e2e8f0';
-    ctx.beginPath();
-    // Sideburns/Back
-    ctx.moveTo(-8, -36); ctx.lineTo(-9, -30); ctx.lineTo(-9, -28); // Left side
-    ctx.moveTo(8, -36); ctx.lineTo(9, -30); ctx.lineTo(9, -28); // Right side
-    ctx.fill();
-    // Specifically draw hair tufts on side
-    ctx.fillRect(-9, -36, 2, 6);
-    ctx.fillRect(7, -36, 2, 6);
-
-    // Master's Apron (NZ Style: Light Blue Border, Silver Tassels/Taus)
-    // Waistband
-    ctx.fillStyle = '#38bdf8'; // Light Blue
-    ctx.fillRect(-8, -15, 16, 2); 
-    // Apron Body (White)
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(-8, -13, 16, 10);
-    // Borders (Light Blue)
-    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
-    ctx.strokeRect(-8, -13, 16, 10);
-    
-    // Taus (Inverted T: ⊥) for Installed Master (Moved UP to avoid border overlap)
-    ctx.fillStyle = '#38bdf8'; 
-    // Left Tau (⊥) - Shifted up by 2px (y: -6 bottom bar, -9 top stem)
-    ctx.fillRect(-7, -6, 3, 1); // Bottom bar
-    ctx.fillRect(-6, -9, 1, 3); // Stem going up
-    // Right Tau (⊥)
-    ctx.fillRect(4, -6, 3, 1); // Bottom bar
-    ctx.fillRect(5, -9, 1, 3); // Stem going up
-    
-    // Collar (V-Shape, Light Blue)
-    ctx.strokeStyle = '#38bdf8'; // Sky Blue
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(-9, -25); ctx.lineTo(0, -15); ctx.lineTo(9, -25); ctx.stroke();
-    
-    // Jewel (Square, Chevron UP ^)
-    ctx.strokeStyle = '#cbd5e1'; // Silver
-    ctx.lineWidth = 2;
-    // Draw ^ shape at bottom of collar
-    ctx.beginPath(); ctx.moveTo(-3, -11); ctx.lineTo(0, -15); ctx.lineTo(3, -11); ctx.stroke();
-
-    // Gauntlets (Cuffs) - Light Blue
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(-11, -18, 2, 6); // Left Arm cuff (visible side)
-    ctx.fillRect(9, -18, 2, 6);   // Right Arm cuff
-
-    ctx.restore();
-  };
-
-  const drawJuniorWarden = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
-    ctx.save();
-    ctx.translate(x, y);
-
-    // Suit Body (Dark)
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(-9, -25, 18, 25);
-
-    // --- LOUNGE SUIT DETAILS (Shirt & Tie) ---
-    // White Shirt (Triangle)
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-4, -25); // Top Left Collar
-    ctx.lineTo(4, -25);  // Top Right Collar
-    ctx.lineTo(0, -15);  // Bottom V
-    ctx.fill();
-    
-    // Black Tie
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.moveTo(0, -24); // Knot top
-    ctx.lineTo(-1, -15); // Left side
-    ctx.lineTo(0, -12); // Bottom tip
-    ctx.lineTo(1, -15); // Right side
-    ctx.fill();
-    // ----------------------------------------
-
-    // Head (Flesh)
-    ctx.fillStyle = '#fca5a5';
-    ctx.beginPath(); ctx.arc(0, -34, 8, 0, Math.PI*2); ctx.fill();
-
-    // Facial Features (Eyes)
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(-3, -35, 2, 2); // Left Eye
-    ctx.fillRect(1, -35, 2, 2);  // Right Eye
-
-    // Hair (Dark Brown - Natural, no headband)
-    ctx.fillStyle = '#78350f';
-    // Draw hair cap/top
-    ctx.beginPath();
-    ctx.arc(0, -34, 8, Math.PI, 0); // Top half of head
-    ctx.lineTo(8, -32); // Sideburn right
-    ctx.lineTo(6, -32); // Sideburn inner
-    ctx.lineTo(-6, -32); // Sideburn inner
-    ctx.lineTo(-8, -32); // Sideburn left
-    ctx.fill();
-
-    // Master Mason Apron (3 Rosettes)
-    // Waistband
-    ctx.fillStyle = '#38bdf8'; // Light Blue
-    ctx.fillRect(-8, -15, 16, 2);
-    // Body
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(-8, -13, 16, 10);
-    // Border
-    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
-    ctx.strokeRect(-8, -13, 16, 10);
-    // Rosettes
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath(); ctx.arc(-5, -6, 1.5, 0, Math.PI*2); ctx.fill(); // Left
-    ctx.beginPath(); ctx.arc(5, -6, 1.5, 0, Math.PI*2); ctx.fill();  // Right
-    ctx.beginPath(); ctx.arc(0, -14, 1.5, 0, Math.PI*2); ctx.fill(); // Flap (Approx)
-
-    // Collar (Light Blue)
-    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(-9, -25); ctx.lineTo(0, -15); ctx.lineTo(9, -25); ctx.stroke();
-
-    // Jewel (Plumb Rule)
-    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(0, -8); ctx.stroke(); // Vertical Line
-    ctx.beginPath(); ctx.arc(0, -8, 1, 0, Math.PI*2); ctx.stroke(); // Bob
-
-    // Gauntlets
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(-11, -18, 2, 6);
-    ctx.fillRect(9, -18, 2, 6);
-
-    ctx.restore();
+  const drawNPC = (ctx: CanvasRenderingContext2D, spriteKey: string, x: number, y: number) => {
+      const img = spritesRef.current[spriteKey];
+      if (img && img.complete) {
+          // If natural dimensions exist (and are our 32x48 size), use them.
+          // Otherwise default to 32x32.
+          const w = img.naturalWidth || 32;
+          const h = img.naturalHeight || 32;
+          
+          // Draw bottom-center aligned to (x, y)
+          // Since (x, y) is the position on ground, we draw up from y.
+          // x is center.
+          ctx.drawImage(img, x - w / 2, y - h, w, h);
+      } else {
+          // Fallback box
+          ctx.fillStyle = 'purple';
+          ctx.fillRect(x - 10, y - 30, 20, 30);
+      }
   };
 
   const drawTempleBackground = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number, width: number, height: number) => {
@@ -757,6 +617,19 @@ const GameCanvas: React.FC = () => {
             ctx.globalAlpha = 1.0;
         }
     }
+    
+    // Draw Jacob's Ladder Labels (World Space)
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 24px serif';
+    ctx.fillStyle = '#fbbf24'; // Gold
+    ctx.shadowColor = 'black';
+    ctx.shadowBlur = 4;
+    JACOBS_LADDER_LABELS.forEach(label => {
+        ctx.fillText(label.text, label.x, DESIGN_HEIGHT - 40 + label.yOffset - 30);
+    });
+    ctx.restore();
 
     if (cameraY < 100) { 
         const cY = 0;
@@ -842,8 +715,21 @@ const GameCanvas: React.FC = () => {
 
         // --- NPC INTERACTIONS ---
 
+        // 0. INNER GUARD (Name Entry Challenge)
+        // He stands at x=200. If name is not entered, he blocks path.
+        const igX = NPC_CONFIG.INNER_GUARD.x;
+        if (!playerName) {
+            // Block player at 150
+            if (player.x > igX - 50) {
+                player.x = igX - 50;
+                player.vx = 0;
+                keysRef.current = {}; // Stop inputs
+                setShowNameInput(true); // Trigger Modal
+            }
+        }
+
         // 1. WORSHIPFUL MASTER INTERACTION
-        const masterX = 250; 
+        const masterX = NPC_CONFIG.MASTER.x; 
         const masterY = groundRefY; // On the ground
         if (!isRestored) {
             const distToMaster = Math.abs((player.x + player.width/2) - masterX);
@@ -852,7 +738,6 @@ const GameCanvas: React.FC = () => {
                 player.vx = 0;
                 keysRef.current = {}; // Stop movement
                 
-                // Use Lore logic to show Master Dialogue
                 const masterOrbMock: Orb = {
                     id: 999,
                     x: 0, y: 0, radius: 0, active: true,
@@ -866,13 +751,10 @@ const GameCanvas: React.FC = () => {
             }
         }
 
-        // 2. JUNIOR WARDEN INTERACTION (Replaces Orb 8)
-        const jwX = 2700;
-        // Fix: Place JW on the platform at yOffset -100.
-        // Platform top is groundRefY - 100. Sprite draws upwards from origin.
-        const jwY = groundRefY - 100; 
+        // 2. JUNIOR WARDEN INTERACTION
+        const jwX = NPC_CONFIG.JUNIOR_WARDEN.x;
+        const jwY = groundRefY + NPC_CONFIG.JUNIOR_WARDEN.yOffset; 
         
-        // Track interaction based on progress state
         if (jwProgress < 3) {
             const distToJW = Math.abs((player.x + player.width/2) - jwX);
             const heightDiff = Math.abs((player.y + player.height) - jwY); // Check feet relative to platform
@@ -893,6 +775,66 @@ const GameCanvas: React.FC = () => {
                  playSound('lore');
             }
         }
+
+        // 3. TASSELS COLLECTION (NOW TRIGGERS POPUP)
+        for (const tassel of TASSELS) {
+             if (!collectedTassels.has(tassel.id)) {
+                 const tX = tassel.x;
+                 const tY = groundRefY + tassel.yOffset;
+                 const dx = (player.x + player.width/2) - tX;
+                 const dy = (player.y + player.height/2) - tY;
+                 if (Math.sqrt(dx*dx + dy*dy) < 40) {
+                     // Create a temporary Orb object for the Tassel to use the Lore Modal
+                     const tasselOrbMock: Orb = {
+                        id: tassel.id,
+                        x: 0, y: 0, radius: 0, active: true,
+                        name: tassel.name,
+                        spriteKey: 'tassel',
+                        blurb: (tassel as any).blurb || "One of the four cardinal virtues."
+                     };
+                     
+                     player.vx = 0;
+                     keysRef.current = {};
+                     setActiveOrb(tasselOrbMock);
+                     setGameState(GameState.LORE);
+                     playSound('lore');
+                 }
+             }
+        }
+
+        // 4. SENIOR WARDEN (GOAL) INTERACTION
+        const swX = NPC_CONFIG.SENIOR_WARDEN.x;
+        const swY = groundRefY;
+        const distToSW = Math.abs((player.x + player.width/2) - swX);
+        const maxScore = ORB_DATA.length * 100;
+        
+        // Trigger win if close to SW
+        if (distToSW < 50 && Math.abs((player.y + player.height) - swY) < 50) {
+            if (score >= maxScore) {
+                // Perfect Ashlar Bonus?
+                let bonus = 0;
+                if (collectedTassels.size === 4) {
+                    bonus = 1000; // Perfect Ashlar Bonus
+                }
+                
+                setScore(s => s + bonus); // Add bonus visually before saving
+                saveScoreToLeaderboard(score + 500 + bonus, true); 
+                setGameState(GameState.VICTORY);
+                playSound('win');
+                return;
+            } else {
+                 player.x = swX - 60;
+                 player.vx = 0;
+                 if (!warningMessage) {
+                    const missing = maxScore - score;
+                    setWarningMessage(`SW: "I cannot pay your wages yet. You lack ${missing} points."`);
+                    playSound('error');
+                    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+                    warningTimeoutRef.current = window.setTimeout(() => setWarningMessage(null), 3000);
+                 }
+            }
+        }
+
 
         for (const cp of CHECKPOINTS) {
             if (player.x > cp.x && cp.x > lastCheckpointRef.current.x) {
@@ -949,26 +891,6 @@ const GameCanvas: React.FC = () => {
         if (player.isGrounded) player.coyoteTimer = 6;
         else if (player.coyoteTimer > 0) player.coyoteTimer--;
 
-        if (player.x + player.width > GOAL_X) {
-        const maxScore = ORB_DATA.length * 100;
-        if (score >= maxScore) {
-            setGameState(GameState.VICTORY);
-            saveScoreToLeaderboard(score + 500, true); 
-            playSound('win');
-            return; 
-        } else {
-            player.x = GOAL_X - player.width - 5;
-            player.vx = 0;
-            if (!warningMessage) {
-                const missing = maxScore - score;
-                setWarningMessage(`Access Denied. Need ${missing} more points.`);
-                playSound('error');
-                if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
-                warningTimeoutRef.current = window.setTimeout(() => setWarningMessage(null), 3000);
-            }
-        }
-        }
-
         for (const orb of orbs) {
         if (!orb.active) continue;
         const dx = (player.x + player.width / 2) - orb.x;
@@ -1012,11 +934,28 @@ const GameCanvas: React.FC = () => {
 
         drawTempleBackground(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
 
-        // Draw Master of the Lodge
-        drawMaster(ctx, masterX, masterY);
+        // Draw Officers (NPCs)
+        drawNPC(ctx, 'inner_guard', NPC_CONFIG.INNER_GUARD.x, groundRefY + NPC_CONFIG.INNER_GUARD.yOffset);
+        drawNPC(ctx, 'worshipful_master', masterX, masterY);
+        drawNPC(ctx, 'junior_warden', jwX, jwY);
+        drawNPC(ctx, 'senior_warden', swX, swY);
 
-        // Draw Junior Warden
-        drawJuniorWarden(ctx, jwX, jwY);
+        // Draw Tassels
+        TASSELS.forEach(t => {
+            if (!collectedTassels.has(t.id)) {
+                const tx = t.x;
+                const ty = groundRefY + t.yOffset;
+                const tImg = spritesRef.current['tassel'];
+                if (tImg) {
+                    // Slight bob animation
+                    const bob = Math.sin(Date.now() / 300) * 5;
+                    ctx.drawImage(tImg, tx - 10, ty - 10 + bob, 20, 40);
+                } else {
+                     ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(tx, ty, 10, 0, Math.PI*2); ctx.fill();
+                }
+            }
+        });
+
 
         CHECKPOINTS.forEach(cp => {
             // Load Square and Compass (generated as 'square_compass')
@@ -1044,13 +983,9 @@ const GameCanvas: React.FC = () => {
         drawStoneBlock(ctx, plat.x, plat.y, plat.width, plat.height, plat.color);
         });
 
-        const isGoalUnlocked = score >= ORB_DATA.length * 100;
-        ctx.fillStyle = isGoalUnlocked ? '#fbbf24' : '#ef4444'; 
-        ctx.globalAlpha = 0.8;
-        ctx.fillRect(GOAL_X, groundRefY - 150, 50, 150);
-        ctx.beginPath(); ctx.arc(GOAL_X + 25, groundRefY - 150, 25, Math.PI, 0); ctx.fill();
-        ctx.globalAlpha = 1.0;
-
+        // Senior Warden Platform (Goal Area)
+        // No longer a red box, rely on the NPC drawing above
+        
         orbs.forEach(orb => {
         if (!orb.active) return;
         const img = spritesRef.current[orb.spriteKey];
@@ -1108,7 +1043,7 @@ const GameCanvas: React.FC = () => {
     }
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, dimensions, hasApron, warningMessage, score, leaderboard, playerName, isRestored, jwProgress]); 
+  }, [gameState, dimensions, hasApron, warningMessage, score, leaderboard, playerName, isRestored, jwProgress, collectedTassels]); 
 
   useEffect(() => {
     if (gameState === GameState.PLAYING) {
@@ -1140,6 +1075,14 @@ const GameCanvas: React.FC = () => {
           } else {
               setGameState(GameState.PLAYING); // Fallback
           }
+          return;
+      }
+
+      // Special check for Tassels (IDs 101-104)
+      if (activeOrb && activeOrb.id >= 101 && activeOrb.id <= 104) {
+          setCollectedTassels(prev => new Set(prev).add(activeOrb!.id));
+          setActiveOrb(null);
+          setGameState(GameState.PLAYING);
           return;
       }
 
@@ -1192,7 +1135,15 @@ const GameCanvas: React.FC = () => {
   };
 
   const startGame = () => {
-    if (playerName.trim().length > 0) setGameState(GameState.PLAYING);
+      setGameState(GameState.PLAYING);
+  };
+  
+  const handleNameSubmit = () => {
+      if (tempName.trim()) {
+          setPlayerName(tempName.trim());
+          setShowNameInput(false);
+          // Don't need to do anything else, the loop will unblock the player
+      }
   };
 
   const resetGame = (goToMenu: boolean = false) => {
@@ -1209,7 +1160,10 @@ const GameCanvas: React.FC = () => {
     setHasApron(false);
     setIsRestored(false); // Reset to candidate state
     setJwProgress(0); // Reset JW flow
+    setCollectedTassels(new Set()); // Reset Tassels
     seenLoreRef.current.clear();
+    setPlayerName(''); // Reset name so they have to meet IG again
+    setTempName('');
     setGameState(goToMenu ? GameState.START_MENU : GameState.PLAYING);
   };
 
@@ -1250,9 +1204,10 @@ const GameCanvas: React.FC = () => {
                 <p className="text-slate-400 mt-1 italic text-sm md:text-base landscape:text-xs">A Journey to Master the First Degree</p>
              </div>
              
-             <div className="w-full max-w-xs space-y-2 landscape:space-y-1 mt-4 landscape:mt-2">
-                <input type="text" placeholder="Enter Your Name" value={playerName} onChange={(e) => setPlayerName(e.target.value)} className="w-full px-4 py-2 landscape:py-1 rounded bg-slate-800 border border-slate-600 focus:border-amber-500 focus:outline-none text-white text-center font-bold text-sm md:text-base" maxLength={15} />
-                <button onClick={startGame} disabled={!playerName.trim()} className="w-full py-3 landscape:py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded transition-colors uppercase tracking-widest shadow-lg text-sm md:text-base">Begin Journey</button>
+             <div className="w-full max-w-xs space-y-4 landscape:space-y-2 mt-4 landscape:mt-2">
+                {/* NAME INPUT REMOVED - NOW IN GAME */}
+                <p className="text-slate-300 text-sm">Prepare to prove your proficiency.</p>
+                <button onClick={startGame} className="w-full py-3 landscape:py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded transition-colors uppercase tracking-widest shadow-lg text-sm md:text-base">Begin Journey</button>
              </div>
           </div>
 
@@ -1320,6 +1275,13 @@ const GameCanvas: React.FC = () => {
           )}
         </div>
         <div className="bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-600 backdrop-blur-sm flex items-center gap-3">
+          {/* Tassels Tracker */}
+          <div className="flex gap-1 mr-4 border-r border-slate-600 pr-4">
+               {[101,102,103,104].map(id => (
+                   <div key={id} className={`w-3 h-3 rounded-full ${collectedTassels.has(id) ? 'bg-amber-400 shadow-[0_0_8px_#fbbf24]' : 'bg-slate-700'}`} title="Cardinal Virtue"></div>
+               ))}
+          </div>
+
           {hasApron && <img src={generateSpriteUrl('apron')} className="w-6 h-6 object-contain" style={{imageRendering:'pixelated'}} title="Apron Equipped"/>}
           <div className="flex flex-col items-end leading-none">
               <span className="text-cyan-400 font-mono text-xl">{score}</span>
@@ -1339,6 +1301,37 @@ const GameCanvas: React.FC = () => {
            <div><h3 className="text-red-400 font-bold text-lg uppercase tracking-widest">Access Denied</h3><p className="text-slate-300 text-sm">{warningMessage}</p></div>
         </div>
       </div>
+      
+      {/* Name Entry Modal (Inner Guard) */}
+      {showNameInput && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+              <div className="bg-slate-900 border-2 border-amber-600 rounded-xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95">
+                  <div className="flex flex-col items-center text-center">
+                      <div className="w-16 h-16 bg-slate-800 rounded-full border-2 border-slate-600 mb-4 flex items-center justify-center">
+                          <img src={generateSpriteUrl('inner_guard')} className="w-10 h-10 object-contain" />
+                      </div>
+                      <h3 className="text-amber-500 font-bold text-xl uppercase mb-1">The Inner Guard Challenges You</h3>
+                      <p className="text-slate-300 italic mb-6">"Whom have you there?"</p>
+                      
+                      <input 
+                        type="text" 
+                        placeholder="Enter your name" 
+                        value={tempName}
+                        onChange={(e) => setTempName(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded px-4 py-2 text-white mb-4 focus:border-amber-500 focus:outline-none"
+                      />
+                      <button 
+                        onClick={handleNameSubmit}
+                        disabled={!tempName.trim()}
+                        className="w-full bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white font-bold py-2 rounded uppercase tracking-wider transition-colors"
+                      >
+                        Proceed
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
       <canvas ref={canvasRef} width={dimensions.w} height={dimensions.h} className="block bg-slate-900" />
       {gameState === GameState.PLAYING && (
         <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-end pb-4 px-4">
@@ -1382,30 +1375,27 @@ const GameCanvas: React.FC = () => {
             <h2 className="shrink-0 text-xl md:text-3xl font-bold text-amber-400 mb-2 uppercase tracking-wider leading-tight">Further Light Required</h2>
             <div className="shrink-0 w-full text-left bg-slate-800/50 p-3 md:p-4 rounded border border-slate-700 my-3 md:my-6">
                 <p className="text-slate-400 text-xs md:text-sm uppercase font-bold mb-1">Question:</p>
-                <p className="text-slate-200 mb-3 md:mb-4 font-serif text-sm md:text-base leading-snug">{activeQuestion.text}</p>
-                <p className="text-amber-400 text-xs md:text-sm uppercase font-bold mb-1">Correct Answer:</p>
-                <p className="text-white font-bold text-base md:text-lg leading-snug">{activeQuestion.correctAnswer}</p>
+                <p className="text-slate-200 mb-3 md:mb-4 font-serif text-sm md:text-base">
+                  "{activeQuestion.text}"
+                </p>
+                <div className="bg-red-900/30 p-2 md:p-3 rounded border-l-4 border-red-500">
+                   <p className="text-red-400 text-xs md:text-sm font-bold">Incorrect Answer</p>
+                </div>
             </div>
-            <p className="shrink-0 text-slate-300 text-xs md:text-base mb-4 md:mb-6 leading-relaxed italic">"We learn through patience and perseverance. Let us return to the West Gate and try again."</p>
-            <div className="flex gap-4">
-                <button onClick={() => resetGame(false)} className="shrink-0 px-6 py-3 md:px-8 bg-amber-700 hover:bg-amber-600 text-white font-bold text-base md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg">Restart Level</button>
-                <button onClick={() => resetGame(true)} className="shrink-0 px-6 py-3 md:px-8 bg-slate-700 hover:bg-slate-600 text-white font-bold text-base md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg">Main Menu</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {gameState === GameState.VICTORY && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="text-center max-w-xl">
-            <h2 className="text-3xl md:text-5xl font-bold text-amber-400 mb-6 animate-bounce">Level 1 Complete</h2>
-            <div className="h-1 w-32 bg-amber-600 mx-auto rounded-full mb-6"></div>
-            <p className="text-slate-200 text-xl md:text-2xl mb-8 font-light leading-relaxed">
-              You have successfully completed the Entered Apprentice stage.<br/><span className="font-bold text-white mt-2 block">Proceed to Fellowcraft</span>
-            </p>
-            <p className="text-blue-300 text-xl mb-8 font-mono">Final Score: {score + 500}</p>
-            <div className="flex justify-center gap-4">
-                <button onClick={() => resetGame(false)} className="px-8 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-full transition transform hover:scale-105 shadow-xl shadow-amber-900/50">Restart Journey</button>
-                <button onClick={() => resetGame(true)} className="px-8 py-3 bg-slate-600 hover:bg-slate-500 text-white font-bold rounded-full transition transform hover:scale-105 shadow-xl">View Leaderboard</button>
+            
+            <div className="flex flex-col md:flex-row gap-3 w-full">
+                <button 
+                  onClick={() => resetGame(false)}
+                  className="flex-1 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded uppercase tracking-widest shadow-lg active:scale-95 transition-all text-sm md:text-base"
+                >
+                  Try Again
+                </button>
+                <button 
+                  onClick={() => resetGame(true)}
+                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded uppercase tracking-widest shadow-lg active:scale-95 transition-all text-sm md:text-base"
+                >
+                  Main Menu
+                </button>
             </div>
           </div>
         </div>
