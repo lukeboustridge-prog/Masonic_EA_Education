@@ -97,20 +97,21 @@ export const generateSpriteUrl = (key: string): string => {
         for(let y=6; y<28; y+=6) fillRect(8, y, 16, 2, '#ca8a04');
         break;
 
-    case 'apron': // Item Icon
+    case 'apron': // Item Icon: EA Apron (White Lambskin)
         ctx.translate(cx, cy);
-        ctx.strokeStyle = C_WHITE; ctx.lineWidth = 2;
+        // Strings
+        ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(-16, -8); ctx.lineTo(16, -8); ctx.stroke();
-        ctx.fillStyle = C_WHITE; 
+        
+        // Body (White)
+        ctx.fillStyle = '#ffffff'; 
         ctx.fillRect(-11, -8, 22, 18);
-        ctx.strokeStyle = C_TURQUOISE; ctx.lineWidth = 2; // Turquoise Border
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; // Subtle grey outline
         ctx.strokeRect(-11, -8, 22, 18);
-        ctx.beginPath(); ctx.moveTo(-11, -8); ctx.lineTo(11, -8); ctx.lineTo(0, 2); ctx.closePath();
-        ctx.fillStyle = C_WHITE; ctx.fill(); ctx.stroke();
-        // Rosettes
-        ctx.fillStyle = C_TURQUOISE;
-        ctx.beginPath(); ctx.arc(-5, 5, 2, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(5, 5, 2, 0, Math.PI*2); ctx.fill();
+
+        // Flap (Down)
+        ctx.beginPath(); ctx.moveTo(-11, -8); ctx.lineTo(11, -8); ctx.lineTo(0, 3); ctx.closePath();
+        ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.stroke();
         break;
         
     case 'worshipful_master': 
