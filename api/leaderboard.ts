@@ -19,8 +19,6 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
       return [];
     }
 
-    // Map Supabase response to our internal type
-    // Convert ISO timestamp string to number for compatibility
     return (data || []).map((row: any) => ({
       id: row.id.toString(),
       name: row.name,
@@ -35,21 +33,22 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
 };
 
 export const submitScore = async (name: string, score: number, completed: boolean, userId?: string | null): Promise<void> => {
-  // 1. Get User ID (prefer passed argument, fallback to URL)
+  console.log(`[SubmitScore] Attempting to submit: Name=${name}, Score=${score}, Completed=${completed}, UserID=${userId}`);
+
+  // 1. Get User ID (Check args, then URL, then potentially LocalStorage if you use it)
   const finalUserId = userId || new URLSearchParams(window.location.search).get('userId');
 
   // 2. Submit to Main App (My Year in the Chair)
   if (finalUserId) {
     if (!MAIN_APP_URL || !GAME_API_SECRET || !GAME_SLUG) {
-      console.error('Missing VITE_MAIN_APP_URL, VITE_GAME_API_SECRET, or VITE_GAME_SLUG.');
+      console.error('[SubmitScore] Missing Env Vars. Skipping Main App submission.');
     } else {
       const normalizedMainAppUrl = MAIN_APP_URL.replace(/\/+$/, '');
       try {
+        console.log('[SubmitScore] Sending to Main App...');
         const response = await fetch(`${normalizedMainAppUrl}/api/mini-games/score`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             secret: GAME_API_SECRET,
             userId: finalUserId,
@@ -59,20 +58,21 @@ export const submitScore = async (name: string, score: number, completed: boolea
         });
 
         if (!response.ok) {
-          console.error('Failed to submit score to main app:', await response.text());
+          console.error('[SubmitScore] Main App Rejected:', await response.text());
         } else {
-          console.log('Score submitted to main app successfully');
+          console.log('[SubmitScore] Main App Success');
         }
       } catch (err) {
-        console.error('Network error submitting to main app:', err);
+        console.error('[SubmitScore] Main App Network Error:', err);
       }
     }
   } else {
-    console.error('Missing userId for score submission.');
+    console.warn('[SubmitScore] SKIPPING Main App: No userId found. Ensure ?userId=... is in the URL.');
   }
 
-  // 3. Keep existing Supabase logic (Optional: serves as a backup)
+  // 3. Supabase Logic
   try {
+    // Fetch the HIGHEST score for this specific name
     const { data, error } = await supabase
       .from('leaderboard')
       .select('id, score, completed')
@@ -81,44 +81,45 @@ export const submitScore = async (name: string, score: number, completed: boolea
       .limit(1);
 
     if (error) {
-      console.error('Error checking existing score:', error);
+      console.error('[SubmitScore] Supabase Fetch Error:', error);
       return;
     }
 
     const existing = data?.[0];
+    
     if (existing) {
-      const existingScore = typeof existing.score === 'number' ? existing.score : Number(existing.score);
+      const existingScore = Number(existing.score);
+      
+      console.log(`[SubmitScore] Found existing entry for ${name}: ${existingScore}`);
+
+      // CHECK: Only return if existing score is strictly HIGHER (or equal).
       if (Number.isFinite(existingScore) && existingScore >= score) {
+        console.log('[SubmitScore] Existing score is higher or equal. No DB update required.');
         return;
       }
 
+      console.log('[SubmitScore] New High Score! Updating DB...');
+      
+      // Preserve "completed" status if it was ever true
       const nextCompleted = existing.completed || completed;
+      
       const { error: updateError } = await supabase
         .from('leaderboard')
         .update({ score, completed: nextCompleted })
-        .eq('name', name);
+        .eq('name', name); // NOTE: This updates ALL rows with this name. Ensure names are unique if possible.
 
-      if (updateError) {
-        console.error('Error updating score:', updateError);
-      }
-      return;
-    }
+      if (updateError) console.error('[SubmitScore] Update Error:', updateError);
 
-    const { error: insertError } = await supabase
-      .from('leaderboard')
-      .insert([
-        {
-          name,
-          score,
-          completed,
-          // created_at is handled by default value in DB
-        }
-      ]);
+    } else {
+      console.log('[SubmitScore] No existing entry. Inserting new record.');
+      
+      const { error: insertError } = await supabase
+        .from('leaderboard')
+        .insert([{ name, score, completed }]);
 
-    if (insertError) {
-      console.error('Error submitting score:', insertError);
+      if (insertError) console.error('[SubmitScore] Insert Error:', insertError);
     }
   } catch (err) {
-    console.error('Unexpected error submitting score:', err);
+    console.error('[SubmitScore] Unexpected Supabase Error:', err);
   }
 };
