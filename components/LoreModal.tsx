@@ -5,18 +5,20 @@ import { generateSpriteUrl } from '../utils/assetGenerator';
 interface LoreModalProps {
   orb: Orb;
   onNext: () => void;
+  isIntro?: boolean;
 }
 
-const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
+const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext, isIntro = false }) => {
   // Use procedural asset generator
   const spriteUrl = generateSpriteUrl(orb.spriteKey);
 
   // Determine button text based on context
   const buttonText = useMemo(() => {
+    if (isIntro) return "Continue";
     if (orb.questionId !== undefined) return "Proceed to Quiz";
     if (orb.spriteKey === 'apron') return "Put On Apron";
     return "Collect";
-  }, [orb.questionId, orb.spriteKey]);
+  }, [isIntro, orb.questionId, orb.spriteKey]);
 
   return (
     // 1. Overlay: Fixed centering with padding
@@ -52,7 +54,12 @@ const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext }) => {
 
         {/* SECTION 2: Content (Bottom in Portrait, Right in Landscape) */}
         <div className="flex flex-col justify-between w-full landscape:w-2/3 landscape:pl-2">
-            <div className="flex-1 flex items-center justify-center overflow-y-auto max-h-32 landscape:max-h-40 my-2 landscape:my-0">
+            <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto max-h-32 landscape:max-h-40 my-2 landscape:my-0 gap-2">
+               {isIntro && (
+                 <p className="text-sm md:text-lg landscape:text-sm font-bold text-amber-400 text-center uppercase tracking-wider">
+                   {orb.name}
+                 </p>
+               )}
                <p className="text-sm md:text-lg landscape:text-sm text-slate-200 font-serif italic text-center leading-relaxed">
                    "{orb.blurb}"
                </p>

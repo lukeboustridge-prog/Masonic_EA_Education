@@ -763,7 +763,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
 
                 let response = `At the door of the lodge stands ${resolvedRank} ${resolvedName}, who was initiated on ${resolvedInitiationDate}.`;
                 if (resolvedIsGrandOfficer === true) {
-                    response = `A Grand Lodge Officer? I am expecting great things from you ${resolvedRank} ${resolvedName}. Brother Inner Guard, let him be admitted to test his knowledge.`;
+                    response = `A Grand Lodge Officer? I am expecting great things of you ${resolvedName}, ${resolvedRank}. Brother Inner Guard, let him be admitted to test his knowledge.`;
                 } else if (resolvedIsGrandOfficer === false) {
                     response = 'Let him be admitted to test his knowledge.';
                 }
