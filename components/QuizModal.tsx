@@ -20,6 +20,20 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
     setShowSuccess(false);
   }, [question]);
 
+  useEffect(() => {
+    if (!showSuccess) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        onCorrect();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSuccess, onCorrect]);
+
   const handleAnswerClick = (answer: string) => {
     if (showSuccess) return; // Prevent double taps during success transition
     
