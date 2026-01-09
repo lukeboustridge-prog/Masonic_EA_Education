@@ -21,6 +21,9 @@ export interface Player extends Entity {
   facing: 1 | -1; // 1 = Right, -1 = Left
   jumpCount: number;
   coyoteTimer: number; // Frames allowed to jump after leaving a platform
+  rank?: string;
+  initiationDate?: string;
+  isGrandOfficer?: boolean;
 }
 
 export interface Platform extends Entity {

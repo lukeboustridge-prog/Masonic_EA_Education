@@ -13,11 +13,17 @@ import { fetchLeaderboard, submitScore as submitLeaderboardScore } from '../api/
 type GameCanvasProps = {
   userId?: string | null;
   userName?: string | null;
+  rank?: string | null;
+  initiationDate?: string | null;
+  isGrandOfficer?: boolean | null;
 };
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiationDate, isGrandOfficer }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const userNameRef = useRef<string | null>(userName ?? null);
+  const rankRef = useRef<string | null>(rank ?? null);
+  const initiationDateRef = useRef<string | null>(initiationDate ?? null);
+  const isGrandOfficerRef = useRef<boolean | null>(isGrandOfficer ?? null);
   
   // Dimensions state - Initialize safely for SSR/Window to prevent 0x0
   const [dimensions, setDimensions] = useState({ 
@@ -66,7 +72,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName }) => {
       setTempName(userName);
       setShowNameInput(false);
     }
-  }, [userId, userName]);
+    if (rank) {
+      rankRef.current = rank;
+    }
+    if (initiationDate) {
+      initiationDateRef.current = initiationDate;
+    }
+    if (typeof isGrandOfficer === 'boolean') {
+      isGrandOfficerRef.current = isGrandOfficer;
+    }
+  }, [userId, userName, rank, initiationDate, isGrandOfficer]);
 
   // Mutable Game State
   const playerRef = useRef<Player>({
