@@ -10,8 +10,15 @@ import LoreModal from './LoreModal';
 import { generateSpriteUrl } from '../utils/assetGenerator';
 import { fetchLeaderboard, submitScore } from '../api/leaderboard';
 
-const GameCanvas: React.FC = () => {
+type GameCanvasProps = {
+  userId?: string | null;
+  userName?: string | null;
+};
+
+const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const userIdRef = useRef<string | null>(userId ?? null);
+  const userNameRef = useRef<string | null>(userName ?? null);
   
   // Dimensions state - Initialize safely for SSR/Window to prevent 0x0
   const [dimensions, setDimensions] = useState({ 
@@ -52,6 +59,18 @@ const GameCanvas: React.FC = () => {
 
   // Standalone Mode State
   const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      userIdRef.current = userId;
+    }
+    if (userName) {
+      userNameRef.current = userName;
+      setPlayerName(userName);
+      setTempName(userName);
+      setShowNameInput(false);
+    }
+  }, [userId, userName]);
 
   // Mutable Game State
   const playerRef = useRef<Player>({
@@ -108,6 +127,51 @@ const GameCanvas: React.FC = () => {
     const updatedData = await fetchLeaderboard();
     setLeaderboard(updatedData);
     setIsLoadingLeaderboard(false);
+  };
+
+  const submitScoreToMainApp = async (finalScore: number) => {
+    const currentUserId = userIdRef.current;
+    if (!currentUserId) return;
+
+    const baseUrl = import.meta.env.VITE_MAIN_APP_URL as string | undefined;
+    const secret = import.meta.env.VITE_GAME_API_SECRET as string | undefined;
+    if (!baseUrl || !secret) {
+      console.log('Score submission skipped: missing VITE_MAIN_APP_URL or VITE_GAME_API_SECRET.');
+      return;
+    }
+
+    const url = `${baseUrl.replace(/\/$/, '')}/api/mini-games/score`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          gameSlug: 'ea-challenge',
+          score: finalScore,
+          secret
+        })
+      });
+
+      if (!response.ok) {
+        console.log('Score submission failed with status', response.status);
+        return;
+      }
+
+      console.log('Score submitted to My Year in the Chair!', {
+        userId: currentUserId,
+        score: finalScore
+      });
+      alert('Score submitted to My Year in the Chair!');
+    } catch (error) {
+      console.log('Score submission error', error);
+    }
+  };
+
+  const handleGameEnd = (finalScore: number, completed: boolean) => {
+    void saveScoreToLeaderboard(finalScore, completed);
+    void submitScoreToMainApp(finalScore);
   };
 
   // --- Initialization & Resize ---
@@ -818,7 +882,7 @@ const GameCanvas: React.FC = () => {
                 }
                 
                 setScore(s => s + bonus); // Add bonus visually before saving
-                saveScoreToLeaderboard(score + 500 + bonus, true); 
+                handleGameEnd(score + 500 + bonus, true);
                 setGameState(GameState.VICTORY);
                 playSound('win');
                 return;
@@ -1130,7 +1194,7 @@ const GameCanvas: React.FC = () => {
 
   const handleIncorrectAnswer = () => {
     playSound('error');
-    saveScoreToLeaderboard(score, false);
+    handleGameEnd(score, false);
     setGameState(GameState.GAME_OVER);
   };
 
@@ -1162,8 +1226,14 @@ const GameCanvas: React.FC = () => {
     setJwProgress(0); // Reset JW flow
     setCollectedTassels(new Set()); // Reset Tassels
     seenLoreRef.current.clear();
-    setPlayerName(''); // Reset name so they have to meet IG again
-    setTempName('');
+    if (userNameRef.current) {
+      setPlayerName(userNameRef.current);
+      setTempName(userNameRef.current);
+      setShowNameInput(false);
+    } else {
+      setPlayerName(''); // Reset name so they have to meet IG again
+      setTempName('');
+    }
     setGameState(goToMenu ? GameState.START_MENU : GameState.PLAYING);
   };
 
