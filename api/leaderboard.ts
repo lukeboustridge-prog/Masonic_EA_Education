@@ -90,9 +90,8 @@ export const submitScore = async (name: string, score: number, completed: boolea
     if (existing) {
       const existingScore = Number(existing.score);
       
-      console.log(`[SubmitScore] Found existing entry for ${name}: ${existingScore}`);
+      console.log(`[SubmitScore] Found existing entry for ${name} (ID: ${existing.id}): ${existingScore}`);
 
-      // CHECK: Only return if existing score is strictly HIGHER (or equal).
       if (Number.isFinite(existingScore) && existingScore >= score) {
         console.log('[SubmitScore] Existing score is higher or equal. No DB update required.');
         return;
@@ -100,15 +99,22 @@ export const submitScore = async (name: string, score: number, completed: boolea
 
       console.log('[SubmitScore] New High Score! Updating DB...');
       
-      // Preserve "completed" status if it was ever true
       const nextCompleted = existing.completed || completed;
       
-      const { error: updateError } = await supabase
+      // FIX: Update by ID and use .select() to verify the row was actually touched
+      const { data: updatedRows, error: updateError } = await supabase
         .from('leaderboard')
         .update({ score, completed: nextCompleted })
-        .eq('name', name); // NOTE: This updates ALL rows with this name. Ensure names are unique if possible.
+        .eq('id', existing.id)
+        .select();
 
-      if (updateError) console.error('[SubmitScore] Update Error:', updateError);
+      if (updateError) {
+        console.error('[SubmitScore] Update FAILED with error:', updateError);
+      } else if (!updatedRows || updatedRows.length === 0) {
+        console.error('[SubmitScore] Update FAILED: Success reported, but 0 rows were changed. This is usually an RLS Policy issue.');
+      } else {
+        console.log('[SubmitScore] DB Updated Successfully:', updatedRows);
+      }
 
     } else {
       console.log('[SubmitScore] No existing entry. Inserting new record.');
