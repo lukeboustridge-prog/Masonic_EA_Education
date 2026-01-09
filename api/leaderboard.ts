@@ -34,38 +34,37 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
   }
 };
 
-export const submitScore = async (name: string, score: number, completed: boolean): Promise<void> => {
-  // 1. Get User ID from URL (Passed by Main App)
-  const urlParams = new URLSearchParams(window.location.search);
-  const userId = urlParams.get('userId');
+export const submitScore = async (name: string, score: number, completed: boolean, userId?: string | null): Promise<void> => {
+  // 1. Get User ID (prefer passed argument, fallback to URL)
+  const finalUserId = userId || new URLSearchParams(window.location.search).get('userId');
 
   // 2. Submit to Main App (My Year in the Chair)
-  if (userId && completed) {
+  if (finalUserId) {
     if (!MAIN_APP_URL || !GAME_API_SECRET || !GAME_SLUG) {
       console.error('Missing VITE_MAIN_APP_URL, VITE_GAME_API_SECRET, or VITE_GAME_SLUG.');
     } else {
-    try {
-      const response = await fetch(`${MAIN_APP_URL}/api/mini-games/score`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          secret: GAME_API_SECRET,
-          userId: userId,
-          gameSlug: GAME_SLUG,
-          score: score,
-        }),
-      });
+      try {
+        const response = await fetch(`${MAIN_APP_URL}/api/mini-games/score`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            secret: GAME_API_SECRET,
+            userId: finalUserId,
+            gameSlug: GAME_SLUG,
+            score: score,
+          }),
+        });
 
-      if (!response.ok) {
-        console.error('Failed to submit score to main app:', await response.text());
-      } else {
-        console.log('Score submitted to main app successfully');
+        if (!response.ok) {
+          console.error('Failed to submit score to main app:', await response.text());
+        } else {
+          console.log('Score submitted to main app successfully');
+        }
+      } catch (err) {
+        console.error('Network error submitting to main app:', err);
       }
-    } catch (err) {
-      console.error('Network error submitting to main app:', err);
-    }
     }
   }
 

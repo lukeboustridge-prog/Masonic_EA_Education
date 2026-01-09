@@ -116,7 +116,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName }) => {
     const name = playerName.trim() || 'Anonymous';
     
     // Submit to Supabase
-    await submitLeaderboardScore(name, finalScore, completed);
+    await submitLeaderboardScore(name, finalScore, completed, userId);
     
     // Refresh local leaderboard display
     setIsLoadingLeaderboard(true);
