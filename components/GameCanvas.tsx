@@ -24,6 +24,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
   const rankRef = useRef<string | null>(rank ?? null);
   const initiationDateRef = useRef<string | null>(initiationDate ?? null);
   const isGrandOfficerRef = useRef<boolean | null>(isGrandOfficer ?? null);
+  const innerGuardGreetedRef = useRef(false);
   
   // Dimensions state - Initialize safely for SSR/Window to prevent 0x0
   const [dimensions, setDimensions] = useState({ 
@@ -748,7 +749,38 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         // 0. INNER GUARD (Name Entry Challenge)
         // He stands at x=200. If name is not entered, he blocks path.
         const igX = NPC_CONFIG.INNER_GUARD.x;
-        if (!playerName) {
+        const resolvedName = userNameRef.current || playerName;
+        const resolvedRank = rankRef.current;
+        const resolvedInitiationDate = initiationDateRef.current;
+        const resolvedIsGrandOfficer = isGrandOfficerRef.current;
+        const hasIdentityDetails = Boolean(resolvedName && resolvedRank && resolvedInitiationDate);
+
+        if (hasIdentityDetails) {
+            if (!innerGuardGreetedRef.current && player.x > igX - 50) {
+                innerGuardGreetedRef.current = true;
+                player.vx = 0;
+                keysRef.current = {}; // Stop inputs
+
+                let response = `At the door of the lodge stands ${resolvedRank} ${resolvedName}, who was initiated on ${resolvedInitiationDate}.`;
+                if (resolvedIsGrandOfficer === true) {
+                    response = `A Grand Lodge Officer? I am expecting great things from you ${resolvedRank} ${resolvedName}. Brother Inner Guard, let him be admitted to test his knowledge.`;
+                } else if (resolvedIsGrandOfficer === false) {
+                    response = 'Let him be admitted to test his knowledge.';
+                }
+
+                const innerGuardOrbMock: Orb = {
+                    id: 997,
+                    x: 0, y: 0, radius: 0, active: true,
+                    name: 'Inner Guard',
+                    spriteKey: 'inner_guard',
+                    blurb: response
+                };
+
+                setActiveOrb(innerGuardOrbMock);
+                setGameState(GameState.LORE);
+                playSound('lore');
+            }
+        } else if (!playerName) {
             // Block player at 150
             if (player.x > igX - 50) {
                 player.x = igX - 50;
