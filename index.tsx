@@ -31,10 +31,10 @@ const IntroGate: React.FC = () => {
     };
   }, []);
 
-  const introSteps = useMemo(() => {
+  const introSequence = useMemo(() => {
     if (!introData.hasIntro) return [];
 
-    return [
+    const steps = [
       {
         speaker: 'Inner Guard',
         blurb: 'Whom have you there?',
@@ -42,14 +42,30 @@ const IntroGate: React.FC = () => {
       },
       {
         speaker: 'Tyler',
-        blurb: `${introData.name}, ${introData.rank}, who was initiated on ${introData.initiationDate}.`,
+        blurb: `${introData.name} ${introData.rank}, who was initiated on ${introData.initiationDate}.`,
         spriteKey: 'square_compass'
       }
     ];
+
+    if (introData.isGrandOfficer === true) {
+      steps.push({
+        speaker: 'Inner Guard',
+        blurb: `A Grand Lodge Officer? I am expecting great things of you ${introData.name}, ${introData.rank}. Brother Inner Guard, let him be admitted to test his knowledge.`,
+        spriteKey: 'inner_guard'
+      });
+    } else if (introData.isGrandOfficer === false) {
+      steps.push({
+        speaker: 'Inner Guard',
+        blurb: 'Let him be admitted to test his knowledge.',
+        spriteKey: 'inner_guard'
+      });
+    }
+
+    return steps;
   }, [introData]);
 
-  if (introData.hasIntro && introStep < introSteps.length) {
-    const step = introSteps[introStep];
+  if (introData.hasIntro && introStep < introSequence.length) {
+    const step = introSequence[introStep];
     const introOrb: Orb = {
       id: 990 + introStep,
       x: 0,
@@ -65,6 +81,7 @@ const IntroGate: React.FC = () => {
       <LoreModal
         orb={introOrb}
         isIntro
+        speaker={step.speaker}
         onNext={() => setIntroStep((current) => current + 1)}
       />
     );

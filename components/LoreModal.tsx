@@ -5,10 +5,11 @@ import { generateSpriteUrl } from '../utils/assetGenerator';
 interface LoreModalProps {
   orb: Orb;
   onNext: () => void;
+  speaker?: string;
   isIntro?: boolean;
 }
 
-const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext, isIntro = false }) => {
+const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext, speaker, isIntro = false }) => {
   // Use procedural asset generator
   const spriteUrl = generateSpriteUrl(orb.spriteKey);
 
@@ -38,26 +39,33 @@ const LoreModal: React.FC<LoreModalProps> = ({ orb, onNext, isIntro = false }) =
         "
       >
         {/* SECTION 1: Visuals (Top in Portrait, Left in Landscape) */}
-        <div className="shrink-0 flex flex-col items-center justify-center landscape:w-1/3 landscape:border-r landscape:border-slate-700 landscape:pr-4">
-            <h2 className="text-lg md:text-2xl landscape:text-base font-bold text-amber-400 text-center leading-none mb-2">{orb.name}</h2>
-            <div className="h-1 landscape:h-0.5 w-16 bg-amber-600 rounded-full mb-3 landscape:mb-4"></div>
-            
-            <div className="p-3 bg-slate-800 rounded-full border-2 border-slate-700 shadow-inner">
-               <img 
-                 src={spriteUrl} 
-                 alt={orb.name}
-                 className="w-16 h-16 md:w-24 md:h-24 landscape:w-16 landscape:h-16 object-contain"
-                 style={{ imageRendering: 'pixelated' }}
-               />
-            </div>
-        </div>
+        {!isIntro && (
+          <div className="shrink-0 flex flex-col items-center justify-center landscape:w-1/3 landscape:border-r landscape:border-slate-700 landscape:pr-4">
+              {speaker && (
+                <p className="text-xs md:text-sm landscape:text-xs font-bold text-amber-400 uppercase tracking-wider mb-1 text-center">
+                  {speaker}
+                </p>
+              )}
+              <h2 className="text-lg md:text-2xl landscape:text-base font-bold text-amber-400 text-center leading-none mb-2">{orb.name}</h2>
+              <div className="h-1 landscape:h-0.5 w-16 bg-amber-600 rounded-full mb-3 landscape:mb-4"></div>
+              
+              <div className="p-3 bg-slate-800 rounded-full border-2 border-slate-700 shadow-inner">
+                 <img 
+                   src={spriteUrl} 
+                   alt={orb.name}
+                   className="w-16 h-16 md:w-24 md:h-24 landscape:w-16 landscape:h-16 object-contain"
+                   style={{ imageRendering: 'pixelated' }}
+                 />
+              </div>
+          </div>
+        )}
 
         {/* SECTION 2: Content (Bottom in Portrait, Right in Landscape) */}
-        <div className="flex flex-col justify-between w-full landscape:w-2/3 landscape:pl-2">
+        <div className={`flex flex-col justify-between w-full ${isIntro ? '' : 'landscape:w-2/3 landscape:pl-2'}`}>
             <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto max-h-32 landscape:max-h-40 my-2 landscape:my-0 gap-2">
-               {isIntro && (
+               {speaker && (
                  <p className="text-sm md:text-lg landscape:text-sm font-bold text-amber-400 text-center uppercase tracking-wider">
-                   {orb.name}
+                   {speaker}
                  </p>
                )}
                <p className="text-sm md:text-lg landscape:text-sm text-slate-200 font-serif italic text-center leading-relaxed">
