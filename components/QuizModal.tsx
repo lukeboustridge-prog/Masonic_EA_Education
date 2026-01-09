@@ -11,6 +11,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
   const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([]);
   const [flashError, setFlashError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showFailure, setShowFailure] = useState(false);
 
   useEffect(() => {
     // Shuffle answers when question changes to avoid pattern matching
@@ -18,6 +19,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
     setShuffledAnswers(shuffled);
     setFlashError(false);
     setShowSuccess(false);
+    setShowFailure(false);
   }, [question]);
 
   useEffect(() => {
@@ -40,14 +42,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
     if (answer === question.correctAnswer) {
       setShowSuccess(true);
     } else {
-      triggerError();
+      setShowFailure(true);
     }
-  };
-
-  const triggerError = () => {
-    setFlashError(true);
-    onIncorrect();
-    setTimeout(() => setFlashError(false), 500);
   };
 
   return (
@@ -86,6 +82,28 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
                className="px-6 py-2 md:px-8 md:py-3 bg-green-700 hover:bg-green-600 text-white font-bold text-sm md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg active:scale-95"
              >
                Continue Journey
+             </button>
+          </div>
+        ) : showFailure ? (
+          <div className="flex flex-col items-center justify-center h-full animate-in fade-in duration-300">
+             <div className="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-amber-900/30 rounded-full flex items-center justify-center mb-2 md:mb-4 border-2 border-amber-500">
+                <svg className="w-6 h-6 md:w-8 md:h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+             </div>
+             <h2 className="text-lg md:text-2xl font-bold text-amber-400 mb-2 md:mb-4 uppercase tracking-widest text-center">Further Light Required</h2>
+             
+             {question.explanation && (
+               <div className="w-full bg-slate-800/80 p-3 md:p-5 rounded-lg border-l-4 border-amber-500 mb-4 md:mb-6 shadow-inner">
+                 <p className="text-slate-200 font-serif text-xs md:text-base leading-snug italic text-center md:text-left">
+                   "{question.explanation}"
+                 </p>
+               </div>
+             )}
+             
+             <button 
+               onClick={onIncorrect}
+               className="px-6 py-2 md:px-8 md:py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold text-sm md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg active:scale-95"
+             >
+               Try Again
              </button>
           </div>
         ) : (
@@ -144,18 +162,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
 
         {/* Error Message */}
         {flashError && (
-          <div className="mt-4 md:mt-6 landscape:mt-2 flex flex-col items-center gap-2 shrink-0">
-            <p className="text-center text-red-400 font-bold animate-pulse text-sm md:text-xl landscape:text-sm">
-              Incorrect! Level Reset.
-            </p>
-            {question.explanation && (
-              <div className="w-full bg-slate-800/80 p-3 rounded-lg border border-slate-700 shadow-inner">
-                <p className="text-slate-200 font-serif text-xs md:text-base leading-snug italic text-center">
-                  "{question.explanation}"
-                </p>
-              </div>
-            )}
-          </div>
+          <p className="mt-4 md:mt-6 landscape:mt-2 text-center text-red-400 font-bold animate-pulse text-sm md:text-xl landscape:text-sm shrink-0">
+            Incorrect! Level Reset.
+          </p>
         )}
       </div>
     </div>
