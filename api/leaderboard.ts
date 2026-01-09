@@ -43,8 +43,9 @@ export const submitScore = async (name: string, score: number, completed: boolea
     if (!MAIN_APP_URL || !GAME_API_SECRET || !GAME_SLUG) {
       console.error('Missing VITE_MAIN_APP_URL, VITE_GAME_API_SECRET, or VITE_GAME_SLUG.');
     } else {
+      const normalizedMainAppUrl = MAIN_APP_URL.replace(/\/+$/, '');
       try {
-        const response = await fetch(`${MAIN_APP_URL}/api/mini-games/score`, {
+        const response = await fetch(`${normalizedMainAppUrl}/api/mini-games/score`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -66,6 +67,8 @@ export const submitScore = async (name: string, score: number, completed: boolea
         console.error('Network error submitting to main app:', err);
       }
     }
+  } else {
+    console.error('Missing userId for score submission.');
   }
 
   // 3. Keep existing Supabase logic (Optional: serves as a backup)
@@ -84,7 +87,8 @@ export const submitScore = async (name: string, score: number, completed: boolea
 
     const existing = data?.[0];
     if (existing) {
-      if (existing.score >= score) {
+      const existingScore = typeof existing.score === 'number' ? existing.score : Number(existing.score);
+      if (Number.isFinite(existingScore) && existingScore >= score) {
         return;
       }
 
@@ -92,7 +96,7 @@ export const submitScore = async (name: string, score: number, completed: boolea
       const { error: updateError } = await supabase
         .from('leaderboard')
         .update({ score, completed: nextCompleted })
-        .eq('id', existing.id);
+        .eq('name', name);
 
       if (updateError) {
         console.error('Error updating score:', updateError);
