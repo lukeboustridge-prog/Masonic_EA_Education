@@ -144,9 +144,18 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
 
         {/* Error Message */}
         {flashError && (
-          <p className="mt-4 md:mt-6 landscape:mt-2 text-center text-red-400 font-bold animate-pulse text-sm md:text-xl landscape:text-sm shrink-0">
-            Incorrect! Level Reset.
-          </p>
+          <div className="mt-4 md:mt-6 landscape:mt-2 flex flex-col items-center gap-2 shrink-0">
+            <p className="text-center text-red-400 font-bold animate-pulse text-sm md:text-xl landscape:text-sm">
+              Incorrect! Level Reset.
+            </p>
+            {question.explanation && (
+              <div className="w-full bg-slate-800/80 p-3 rounded-lg border border-slate-700 shadow-inner">
+                <p className="text-slate-200 font-serif text-xs md:text-base leading-snug italic text-center">
+                  "{question.explanation}"
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
