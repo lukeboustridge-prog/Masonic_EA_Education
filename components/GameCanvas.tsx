@@ -182,10 +182,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
     const assetsToLoad = [
         ...uniqueKeys,
         'square_compass', 
-        'worshipful_master',
-        'junior_warden',
+        'wm',
         'inner_guard',
-        'senior_warden',
+        'officer',
         'tassel',
         'pillar_ionic', 
         'pillar_doric', 
@@ -998,9 +997,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
 
         // Draw Officers (NPCs)
         drawNPC(ctx, 'inner_guard', NPC_CONFIG.INNER_GUARD.x, groundRefY + NPC_CONFIG.INNER_GUARD.yOffset);
-        drawNPC(ctx, 'worshipful_master', masterX, masterY);
-        drawNPC(ctx, 'junior_warden', jwX, jwY);
-        drawNPC(ctx, 'senior_warden', swX, swY);
+        drawNPC(ctx, 'wm', masterX, masterY);
+        drawNPC(ctx, 'officer', jwX, jwY);
+        drawNPC(ctx, 'officer', swX, swY);
 
         // Draw Tassels
         TASSELS.forEach(t => {

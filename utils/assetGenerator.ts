@@ -2,18 +2,38 @@
 
 import { BASE64_SPRITES } from './base64Assets';
 
+const FILE_BASED_SPRITES = ['wm', 'inner_guard', 'officer'] as const;
+const FILE_KEY_MAP: Record<string, string> = {
+  worshipful_master: 'wm',
+  wm: 'wm',
+  junior_warden: 'officer',
+  senior_warden: 'officer',
+  officer: 'officer'
+};
+const PROCEDURAL_KEY_MAP: Record<string, string> = {
+  wm: 'worshipful_master',
+  officer: 'junior_warden'
+};
+
 export const generateSpriteUrl = (key: string): string => {
+  const fileKey = FILE_KEY_MAP[key] ?? key;
+  if (FILE_BASED_SPRITES.includes(fileKey as typeof FILE_BASED_SPRITES[number])) {
+    return `/sprites/${fileKey}.png`;
+  }
+
+  const resolvedKey = PROCEDURAL_KEY_MAP[key] ?? key;
+
   // 1. Check if a static Base64 string exists (Priority)
-  if (BASE64_SPRITES[key] && BASE64_SPRITES[key].length > 0) {
-      return BASE64_SPRITES[key];
+  if (BASE64_SPRITES[resolvedKey] && BASE64_SPRITES[resolvedKey].length > 0) {
+      return BASE64_SPRITES[resolvedKey];
   }
 
   // 2. Fallback: Procedural Canvas Generation
   if (typeof document === 'undefined') return '';
   const canvas = document.createElement('canvas');
   
-  const isPillar = key.startsWith('pillar');
-  const isNPC = ['worshipful_master', 'senior_warden', 'junior_warden', 'inner_guard'].includes(key);
+  const isPillar = resolvedKey.startsWith('pillar');
+  const isNPC = ['worshipful_master', 'senior_warden', 'junior_warden', 'inner_guard'].includes(resolvedKey);
 
   // 32x32 for icons, 40x160 for pillars, 32x48 for NPCs (to match 45px Player)
   canvas.width = isPillar ? 40 : 32;
@@ -43,7 +63,7 @@ export const generateSpriteUrl = (key: string): string => {
   const C_FLESH = '#fca5a5';
   const C_WHITE = '#f8fafc';
 
-  switch(key) {
+  switch(resolvedKey) {
     case 'gauge': 
         ctx.translate(cx, cy); ctx.rotate(-Math.PI / 4);
         fillRect(-14, -4, 28, 8, '#fbbf24'); 
