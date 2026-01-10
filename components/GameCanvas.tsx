@@ -580,15 +580,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
   const drawNPC = (ctx: CanvasRenderingContext2D, spriteKey: string, x: number, y: number) => {
       const img = spritesRef.current[spriteKey];
       if (img && img.complete) {
-          // If natural dimensions exist (and are our 32x48 size), use them.
-          // Otherwise default to 32x32.
+          const targetHeight = playerRef.current.height || 45;
           const w = img.naturalWidth || 32;
           const h = img.naturalHeight || 32;
-          
+          const scale = targetHeight / h;
+          const scaledW = w * scale;
+          const scaledH = h * scale;
+
           // Draw bottom-center aligned to (x, y)
           // Since (x, y) is the position on ground, we draw up from y.
           // x is center.
-          ctx.drawImage(img, x - w / 2, y - h, w, h);
+          ctx.drawImage(img, x - scaledW / 2, y - scaledH, scaledW, scaledH);
       } else {
           // Fallback box
           ctx.fillStyle = 'purple';
