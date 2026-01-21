@@ -2,13 +2,15 @@
 
 import { BASE64_SPRITES } from './base64Assets';
 
-const FILE_BASED_SPRITES = ['wm', 'inner_guard', 'officer'] as const;
+const FILE_BASED_SPRITES = ['wm', 'inner_guard', 'officer', 'Grand_master', 'Grand_Steward'] as const;
 const FILE_KEY_MAP: Record<string, string> = {
   worshipful_master: 'wm',
   wm: 'wm',
   junior_warden: 'officer',
   senior_warden: 'officer',
-  officer: 'officer'
+  officer: 'officer',
+  grand_master: 'Grand_master',
+  grand_steward: 'Grand_Steward'
 };
 const PROCEDURAL_KEY_MAP: Record<string, string> = {
   wm: 'worshipful_master',

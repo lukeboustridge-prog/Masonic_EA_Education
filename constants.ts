@@ -1,64 +1,142 @@
-import { Question, Platform, Orb, OrbDefinition } from './types';
+import { Question, Platform, Orb, OrbDefinition, PlatformType } from './types';
 
-// Physics Tweaks for "Smoother" feel
-// Lower gravity and jump force makes the jump arc slower and easier to control
-export const GRAVITY = 0.4; 
-export const FRICTION = 0.82; // Slightly more friction for tighter stopping
-export const MOVE_SPEED = 5.0; // Slightly faster to compensate for longer air time
-export const JUMP_FORCE = -11; 
+// Temple Visual Theme Colors
+export const TEMPLE_COLORS = {
+  STONE_DARK: '#2d2a26',
+  STONE_MID: '#4a4540',
+  STONE_LIGHT: '#6b6560',
+  STONE_ACCENT: '#8b8580',
+  CANDLE_GLOW: '#ffb347',
+  TORCH_GLOW: '#ff8c00',
+  AMBIENT_WARM: '#3d3428',
+  GOLD: '#d4af37',
+  GOLD_BRIGHT: '#ffd700',
+  ROYAL_BLUE: '#1e3a5f',
+  MOSAIC_WHITE: '#e8e4df',
+  MOSAIC_BLACK: '#1a1a1a',
+  CEILING_DARK: '#1a1510',
+  NIGHT_SKY: '#0d1117',
+};
 
-export const WORLD_WIDTH = 8000; 
+// Room definitions for the temple journey
+export const ROOM_DEFINITIONS = [
+  { id: 1, name: 'Preparation Room', xStart: 0, xEnd: 800 },
+  { id: 2, name: 'Entrance Porch', xStart: 800, xEnd: 1200 },
+  { id: 3, name: 'Lodge Room West', xStart: 1200, xEnd: 2150 },
+  { id: 4, name: 'Lodge Center', xStart: 2150, xEnd: 3000 },
+  { id: 5, name: 'North Passage', xStart: 3000, xEnd: 4000 },
+  { id: 6, name: 'Winding Stairs', xStart: 4000, xEnd: 5100 },
+  { id: 7, name: 'Middle Chamber', xStart: 5100, xEnd: 5500 },
+  { id: 8, name: 'Celestial Canopy', xStart: 5500, xEnd: 6900 },
+  { id: 9, name: 'The East', xStart: 6900, xEnd: 8000 },
+];
+
+// Light sources for candlelit atmosphere
+export const LIGHT_SOURCES = [
+  // Preparation Room - dim, single candle
+  { x: 400, y: 280, radius: 120, intensity: 0.4, color: TEMPLE_COLORS.CANDLE_GLOW },
+
+  // Entrance Porch - torches by pillars
+  { x: 850, y: 200, radius: 150, intensity: 0.6, color: TEMPLE_COLORS.TORCH_GLOW },
+  { x: 1150, y: 200, radius: 150, intensity: 0.6, color: TEMPLE_COLORS.TORCH_GLOW },
+
+  // Lodge Room West - multiple candles
+  { x: 1300, y: 250, radius: 140, intensity: 0.5, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 1500, y: 180, radius: 130, intensity: 0.5, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 1700, y: 250, radius: 140, intensity: 0.5, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 1900, y: 200, radius: 130, intensity: 0.5, color: TEMPLE_COLORS.CANDLE_GLOW },
+
+  // Lodge Center - brighter, central area
+  { x: 2300, y: 220, radius: 160, intensity: 0.6, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 2550, y: 180, radius: 150, intensity: 0.6, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 2800, y: 220, radius: 160, intensity: 0.6, color: TEMPLE_COLORS.CANDLE_GLOW },
+
+  // North Passage - darker, fewer lights (mines area)
+  { x: 3200, y: 350, radius: 100, intensity: 0.3, color: TEMPLE_COLORS.TORCH_GLOW },
+  { x: 3600, y: 400, radius: 100, intensity: 0.3, color: TEMPLE_COLORS.TORCH_GLOW },
+  { x: 3900, y: 300, radius: 120, intensity: 0.4, color: TEMPLE_COLORS.TORCH_GLOW },
+
+  // Winding Stairs - ascending lights
+  { x: 4150, y: 250, radius: 120, intensity: 0.4, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 4400, y: 220, radius: 120, intensity: 0.4, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 4650, y: 190, radius: 120, intensity: 0.5, color: TEMPLE_COLORS.CANDLE_GLOW },
+  { x: 4900, y: 160, radius: 130, intensity: 0.5, color: TEMPLE_COLORS.CANDLE_GLOW },
+
+  // Middle Chamber - Jacob's Ladder area, golden glow
+  { x: 5150, y: 200, radius: 180, intensity: 0.7, color: TEMPLE_COLORS.GOLD_BRIGHT },
+  { x: 5350, y: 100, radius: 160, intensity: 0.6, color: TEMPLE_COLORS.GOLD_BRIGHT },
+  { x: 5250, y: -100, radius: 180, intensity: 0.7, color: TEMPLE_COLORS.GOLD_BRIGHT },
+  { x: 5300, y: -300, radius: 200, intensity: 0.8, color: TEMPLE_COLORS.GOLD_BRIGHT },
+
+  // Celestial Canopy - ethereal starlight
+  { x: 5700, y: -400, radius: 200, intensity: 0.5, color: '#aabbff' },
+  { x: 6000, y: -350, radius: 180, intensity: 0.5, color: '#aabbff' },
+  { x: 6300, y: -300, radius: 180, intensity: 0.5, color: '#aabbff' },
+  { x: 6600, y: -250, radius: 200, intensity: 0.5, color: '#aabbff' },
+
+  // The East - blazing sunlight
+  { x: 7000, y: 180, radius: 200, intensity: 0.7, color: TEMPLE_COLORS.GOLD_BRIGHT },
+  { x: 7300, y: 150, radius: 220, intensity: 0.8, color: TEMPLE_COLORS.GOLD_BRIGHT },
+  { x: 7600, y: 120, radius: 250, intensity: 0.9, color: TEMPLE_COLORS.GOLD_BRIGHT },
+  { x: 7850, y: 100, radius: 300, intensity: 1.0, color: TEMPLE_COLORS.GOLD_BRIGHT },
+];
+
+// Physics Tweaks for better feel
+export const GRAVITY = 0.35;      // Slightly floatier jumps
+export const FRICTION = 0.85;     // Slightly more slide (feels faster)
+export const MOVE_SPEED = 5.5;    // Slightly faster
+export const JUMP_FORCE = -11.5;  // Slightly higher jumps
+
+export const WORLD_WIDTH = 8000;
 
 // Logical height for Scale-to-Fit
-// Reduced to 360 to zoom in the camera for better mobile visibility
 export const DESIGN_HEIGHT = 360;
 
 // Checkpoints with visual coordinates (x, yOffset from ground)
 export const CHECKPOINTS = [
-  { x: 50, yOffset: 0 },   // Start
-  { x: 1200, yOffset: 0 }, // Tower Base
-  { x: 2150, yOffset: 0 }, // Hills
-  { x: 3000, yOffset: 150 }, // Mines (Lower)
-  { x: 4300, yOffset: -50 }, // Bridge
-  { x: 5100, yOffset: 0 }, // High Tower Base
-  { x: 6900, yOffset: 0 }  // Final Stretch
+  { x: 50, yOffset: 0 },      // Start
+  { x: 1200, yOffset: 0 },    // Tower Base
+  { x: 2150, yOffset: 0 },    // Hills
+  { x: 3000, yOffset: 150 },  // Mines entrance
+  { x: 4280, yOffset: -50 },  // Bridge start
+  { x: 5100, yOffset: 0 },    // Jacob's Ladder base
+  { x: 6850, yOffset: 0 }     // Final Stretch
 ];
 
 // NPC Locations
 export const NPC_CONFIG = {
   INNER_GUARD: { x: 200, yOffset: 0 },
-  // Master must be met BEFORE the first Apron orb (which is at x: 550 now)
-  MASTER: { x: 350, yOffset: 0 }, 
+  MASTER: { x: 350, yOffset: 0 },
   JUNIOR_WARDEN: { x: 2700, yOffset: -100 },
   SENIOR_WARDEN: { x: 7800, yOffset: 0 },
 };
 
-// Tassels (Cardinal Virtues) - Located in safe zones (Centered on Platforms)
+// Tassels (Cardinal Virtues) - Located on DISTINCT platforms away from orbs
 export const TASSELS = [
-  { 
-    id: 101, 
-    name: "Temperance", 
-    x: 875, yOffset: -300, // Safe: Platform at 800, width 150. Center is 875.
+  {
+    id: 101,
+    name: "Temperance",
+    x: 2560, yOffset: -230, // Rolling Hills platform at 2500, width 120. Center is 2560.
     blurb: "Temperance is that due restraint upon our affections and passions which renders the body tame and governable, and frees the mind from the allurements of vice."
-  }, 
-  { 
-    id: 102, 
-    name: "Fortitude", 
-    x: 1500, yOffset: -500, // Safe: Platform at 1450, width 100. Center is 1500.
+  },
+  {
+    id: 102,
+    name: "Fortitude",
+    x: 1440, yOffset: -250, // Tower platform at 1380, width 120. Center is 1440.
     blurb: "Fortitude is that noble and steady purpose of the mind, whereby we are enabled to undergo any pain, peril, or danger, when prudentially deemed expedient."
-  }, 
-  { 
-    id: 103, 
-    name: "Prudence", 
-    x: 4100, yOffset: 0, // Safe: Platform at 4000, width 200. Center is 4100.
+  },
+  {
+    id: 103,
+    name: "Prudence",
+    x: 4670, yOffset: -130, // Bridge peak platform at 4620, width 100. Center is 4670.
     blurb: "Prudence teaches us to regulate our lives and actions agreeably to the dictates of reason, and is that habit by which we wisely judge."
-  }, 
-  { 
-    id: 104, 
-    name: "Justice", 
-    x: 6050, yOffset: -550, // Safe: Platform at 6000, width 100. Center is 6050.
+  },
+  {
+    id: 104,
+    name: "Justice",
+    x: 6025, yOffset: -550, // Floating isle at 5950, width 150. Center is 6025.
     blurb: "Justice is that station or boundary of right which enables us to render to every man his just due without distinction."
-  } 
+  }
 ];
 
 // Jacob's Ladder Visuals
@@ -314,75 +392,80 @@ export const QUESTIONS: Question[] = [
 ];
 
 // yOffset: 0 is the ground level. Negative is Up. Positive is Down (Mines).
-export const PLATFORM_DATA = [
-  // --- SECTION 1: The Preparation Room (Start) ---
-  { x: 0, yOffset: 0, width: 800, height: 600, color: '#64748b' }, 
-  { x: 500, yOffset: -80, width: 100, height: 20, color: '#94a3b8' },
-  { x: 650, yOffset: -180, width: 100, height: 20, color: '#94a3b8' },
-  { x: 800, yOffset: -250, width: 150, height: 20, color: '#475569' }, // Orb 1 spot
+// Platform types: 'floor' | 'step' | 'pillar_base' | 'platform' | 'altar' | 'ladder_rung' | 'celestial'
+export const PLATFORM_DATA: Array<{
+  x: number;
+  yOffset: number;
+  width: number;
+  height: number;
+  color: string;
+  type?: PlatformType;
+}> = [
+  // --- SECTION 1: Preparation Room (Starting Area) ---
+  { x: 0, yOffset: 0, width: 800, height: 600, color: TEMPLE_COLORS.STONE_MID, type: 'floor' },
+  { x: 500, yOffset: -80, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 650, yOffset: -180, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 800, yOffset: -250, width: 180, height: 20, color: TEMPLE_COLORS.STONE_MID, type: 'platform' },
 
-  // The Pit (Gap)
-  { x: 1000, yOffset: -150, width: 80, height: 20, color: '#94a3b8' }, 
+  // Entrance Porch - stepping stones
+  { x: 950, yOffset: -100, width: 100, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 1080, yOffset: -50, width: 100, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
 
-  // --- SECTION 2: The First Tower ---
-  { x: 1200, yOffset: 0, width: 400, height: 600, color: '#64748b' }, // Base
-  { x: 1200, yOffset: -120, width: 100, height: 20, color: '#94a3b8' },
-  { x: 1400, yOffset: -220, width: 100, height: 20, color: '#94a3b8' },
-  { x: 1300, yOffset: -340, width: 100, height: 20, color: '#94a3b8' },
-  { x: 1450, yOffset: -460, width: 100, height: 20, color: '#94a3b8' },
-  { x: 1300, yOffset: -580, width: 300, height: 20, color: '#cbd5e1' }, // High platform Orb 2
+  // --- SECTION 2: Lodge Room West (The First Tower) ---
+  { x: 1200, yOffset: 0, width: 400, height: 600, color: TEMPLE_COLORS.STONE_MID, type: 'floor' },
+  { x: 1200, yOffset: -120, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 1380, yOffset: -220, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 1280, yOffset: -340, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 1420, yOffset: -460, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 1280, yOffset: -580, width: 320, height: 20, color: TEMPLE_COLORS.STONE_ACCENT, type: 'platform' },
 
   // Descent Steps
-  { x: 1700, yOffset: -450, width: 80, height: 20, color: '#94a3b8' },
-  { x: 1850, yOffset: -300, width: 80, height: 20, color: '#94a3b8' },
-  { x: 2000, yOffset: -150, width: 80, height: 20, color: '#94a3b8' },
+  { x: 1680, yOffset: -450, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 1850, yOffset: -300, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 2020, yOffset: -150, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
 
-  // --- SECTION 3: The Rolling Hills ---
-  { x: 2150, yOffset: 0, width: 800, height: 600, color: '#64748b' },
-  { x: 2300, yOffset: -100, width: 100, height: 20, color: '#475569' },
-  { x: 2500, yOffset: -200, width: 100, height: 20, color: '#475569' },
-  { x: 2700, yOffset: -100, width: 100, height: 20, color: '#475569' },
+  // --- SECTION 3: Lodge Center (Rolling Hills) ---
+  { x: 2150, yOffset: 0, width: 800, height: 600, color: TEMPLE_COLORS.STONE_MID, type: 'floor' },
+  { x: 2300, yOffset: -100, width: 120, height: 20, color: TEMPLE_COLORS.STONE_MID, type: 'step' },
+  { x: 2500, yOffset: -200, width: 120, height: 20, color: TEMPLE_COLORS.STONE_MID, type: 'step' },
+  { x: 2700, yOffset: -100, width: 120, height: 20, color: TEMPLE_COLORS.STONE_MID, type: 'platform' }, // JW platform
 
-  // --- SECTION 4: The Mines (Lower Route) ---
-  // Player must drop down
-  { x: 3000, yOffset: 150, width: 200, height: 20, color: '#334155' }, // Drop platform
-  { x: 3250, yOffset: 250, width: 200, height: 20, color: '#334155' },
-  { x: 3500, yOffset: 350, width: 400, height: 20, color: '#1e293b' }, // Deep bottom
-  { x: 3700, yOffset: 250, width: 100, height: 20, color: '#334155' }, // Climbing out
-  { x: 3850, yOffset: 100, width: 100, height: 20, color: '#334155' },
-  { x: 4000, yOffset: 0, width: 200, height: 600, color: '#64748b' }, // Back to surface
+  // --- SECTION 4: North Passage (The Mines) ---
+  { x: 3000, yOffset: 150, width: 220, height: 20, color: TEMPLE_COLORS.STONE_DARK, type: 'step' },
+  { x: 3250, yOffset: 250, width: 220, height: 20, color: TEMPLE_COLORS.STONE_DARK, type: 'step' },
+  { x: 3500, yOffset: 350, width: 450, height: 20, color: TEMPLE_COLORS.STONE_DARK, type: 'platform' },
+  { x: 3700, yOffset: 250, width: 120, height: 20, color: TEMPLE_COLORS.STONE_DARK, type: 'step' },
+  { x: 3850, yOffset: 100, width: 120, height: 20, color: TEMPLE_COLORS.STONE_DARK, type: 'step' },
+  { x: 4000, yOffset: 0, width: 250, height: 600, color: TEMPLE_COLORS.STONE_MID, type: 'floor' },
 
-  // --- SECTION 5: The Bridge of Sighs ---
-  { x: 4300, yOffset: -50, width: 80, height: 20, color: '#94a3b8' },
-  { x: 4450, yOffset: -50, width: 80, height: 20, color: '#94a3b8' },
-  { x: 4600, yOffset: -150, width: 80, height: 20, color: '#94a3b8' }, // Orb spot
-  { x: 4750, yOffset: -50, width: 80, height: 20, color: '#94a3b8' },
-  { x: 4900, yOffset: -50, width: 80, height: 20, color: '#94a3b8' },
+  // --- SECTION 5: Winding Stairs (Bridge of Sighs) ---
+  { x: 4280, yOffset: -50, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 4450, yOffset: -50, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 4620, yOffset: -100, width: 100, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 4750, yOffset: -50, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
+  { x: 4920, yOffset: -50, width: 120, height: 20, color: TEMPLE_COLORS.STONE_LIGHT, type: 'step' },
 
-  // --- SECTION 6: The High Tower (Jacob's Ladder) ---
-  { x: 5100, yOffset: 0, width: 200, height: 600, color: '#64748b' },
-  { x: 5150, yOffset: -150, width: 80, height: 20, color: '#94a3b8' },
-  { x: 5350, yOffset: -250, width: 80, height: 20, color: '#94a3b8' },
-  { x: 5150, yOffset: -350, width: 80, height: 20, color: '#94a3b8' },
-  { x: 5350, yOffset: -450, width: 80, height: 20, color: '#94a3b8' },
-  { x: 5150, yOffset: -550, width: 80, height: 20, color: '#94a3b8' },
-  { x: 5350, yOffset: -650, width: 80, height: 20, color: '#94a3b8' },
-  { x: 5200, yOffset: -750, width: 300, height: 20, color: '#cbd5e1' }, // Peak
+  // --- SECTION 6: Middle Chamber (Jacob's Ladder) ---
+  { x: 5100, yOffset: 0, width: 220, height: 600, color: TEMPLE_COLORS.STONE_MID, type: 'floor' },
+  { x: 5130, yOffset: -150, width: 100, height: 20, color: TEMPLE_COLORS.GOLD, type: 'ladder_rung' },
+  { x: 5320, yOffset: -250, width: 100, height: 20, color: TEMPLE_COLORS.GOLD, type: 'ladder_rung' },
+  { x: 5130, yOffset: -350, width: 100, height: 20, color: TEMPLE_COLORS.GOLD, type: 'ladder_rung' },
+  { x: 5320, yOffset: -450, width: 100, height: 20, color: TEMPLE_COLORS.GOLD, type: 'ladder_rung' },
+  { x: 5130, yOffset: -550, width: 100, height: 20, color: TEMPLE_COLORS.GOLD, type: 'ladder_rung' },
+  { x: 5320, yOffset: -650, width: 100, height: 20, color: TEMPLE_COLORS.GOLD, type: 'ladder_rung' },
+  { x: 5180, yOffset: -750, width: 340, height: 20, color: TEMPLE_COLORS.GOLD_BRIGHT, type: 'altar' },
 
-  // --- SECTION 7: The Floating Isles (Wide Gaps) ---
-  { x: 5700, yOffset: -600, width: 100, height: 20, color: '#475569' },
-  { x: 6000, yOffset: -500, width: 100, height: 20, color: '#475569' },
-  { x: 6300, yOffset: -400, width: 100, height: 20, color: '#475569' },
-  { x: 6600, yOffset: -300, width: 100, height: 20, color: '#475569' },
-  
-  // --- SECTION 8: The Final Stretch ---
-  { x: 6900, yOffset: 0, width: 1100, height: 600, color: '#64748b' },
-  { x: 7200, yOffset: -150, width: 150, height: 20, color: '#cbd5e1' }, // Archway base
-  { x: 7500, yOffset: -250, width: 150, height: 20, color: '#cbd5e1' },
+  // --- SECTION 7: Celestial Canopy (Floating Isles) ---
+  { x: 5650, yOffset: -600, width: 150, height: 20, color: TEMPLE_COLORS.ROYAL_BLUE, type: 'celestial' },
+  { x: 5950, yOffset: -520, width: 150, height: 20, color: TEMPLE_COLORS.ROYAL_BLUE, type: 'celestial' },
+  { x: 6250, yOffset: -440, width: 150, height: 20, color: TEMPLE_COLORS.ROYAL_BLUE, type: 'celestial' },
+  { x: 6550, yOffset: -360, width: 150, height: 20, color: TEMPLE_COLORS.ROYAL_BLUE, type: 'celestial' },
 
-  // Goal Pillars
-  { x: 7750, yOffset: -150, width: 50, height: 150, color: '#cbd5e1' },
-  { x: 7900, yOffset: -150, width: 50, height: 150, color: '#cbd5e1' },
+  // --- SECTION 8: The East (Final Stretch) ---
+  { x: 6850, yOffset: 0, width: 1150, height: 600, color: TEMPLE_COLORS.STONE_MID, type: 'floor' },
+  { x: 7200, yOffset: -150, width: 180, height: 20, color: TEMPLE_COLORS.STONE_ACCENT, type: 'step' },
+  { x: 7500, yOffset: -250, width: 180, height: 20, color: TEMPLE_COLORS.STONE_ACCENT, type: 'altar' },
+
 ];
 
 export const GOAL_X = 7800;
@@ -428,62 +511,77 @@ const TOOLS = {
 
 export const ORB_DATA: OrbDefinition[] = [
   // --- Start / Preparation ---
-  // Orb 1: The First Apron (No Question, Instructional)
-  // MOVED further along (x: 550) so player hits Master NPC (x: 350) first
-  { 
-    id: 1, 
-    x: 550, 
-    yOffset: -80, // On the first small step up
-    radius: 20, 
+  // Platform at x:500 yOffset:-80 - orb floats 30 above
+  {
+    id: 1,
+    x: 560,
+    yOffset: -115,
+    radius: 20,
     ...TOOLS.APRON,
     blurb: "The Lambskin Apron is the badge of innocence and the bond of friendship. It is the first gift bestowed upon you. You are now permitted to wear it."
-    // No questionId provided -> Skips Quiz
-  },
-  
-  // New Orb 21: Recycled Question 1 (The First Care)
-  { 
-    id: 21, 
-    x: 700, // On the platform at x:650
-    yOffset: -200, 
-    radius: 20, 
-    questionId: 1, 
-    ...TOOLS.APRON 
   },
 
-  { id: 2, x: 800, yOffset: -300, radius: 20, questionId: 2, ...TOOLS.APRON },
-  
+  // Platform at x:650 yOffset:-180 - orb floats 35 above
+  { id: 21, x: 710, yOffset: -215, radius: 20, questionId: 1, ...TOOLS.APRON },
+
+  // Platform at x:800 yOffset:-250 - orb floats 35 above
+  { id: 2, x: 890, yOffset: -285, radius: 20, questionId: 2, ...TOOLS.APRON },
+
   // --- Tower 1 ---
-  // Introduce Tools 1st time
-  { id: 3, x: 1250, yOffset: -170, radius: 20, questionId: 3, ...TOOLS.GAUGE }, // Gauge Intro
-  { id: 4, x: 1350, yOffset: -390, radius: 20, questionId: 4, ...TOOLS.GAVEL }, // Gavel Intro
-  { id: 5, x: 1450, yOffset: -650, radius: 20, questionId: 5, ...TOOLS.CHISEL }, // Chisel Intro
+  // Platform at x:1200 yOffset:-120 - orb floats 35 above
+  { id: 3, x: 1260, yOffset: -155, radius: 20, questionId: 3, ...TOOLS.GAUGE },
 
-  // --- Hills ---
-  { id: 6, x: 1850, yOffset: -350, radius: 20, questionId: 6, ...TOOLS.ROUGH }, // Rough Intro
-  { id: 7, x: 2300, yOffset: -150, radius: 20, questionId: 7, ...TOOLS.PERFECT }, // Perfect Intro
-  // REMOVED ID 8 (Ladder/Question 8) - Replaced by Junior Warden NPC encounter
-  // { id: 8, x: 2700, yOffset: -150, radius: 20, questionId: 8, ...TOOLS.LADDER }, 
+  // Platform at x:1280 yOffset:-340 - orb floats 35 above
+  { id: 4, x: 1340, yOffset: -375, radius: 20, questionId: 4, ...TOOLS.GAVEL },
+
+  // Platform at x:1280 yOffset:-580 - orb floats 35 above
+  { id: 5, x: 1440, yOffset: -615, radius: 20, questionId: 5, ...TOOLS.CHISEL },
+
+  // --- Descent/Hills ---
+  // Platform at x:1850 yOffset:-300 - orb floats 35 above
+  { id: 6, x: 1910, yOffset: -335, radius: 20, questionId: 6, ...TOOLS.ROUGH },
+
+  // Platform at x:2300 yOffset:-100 - orb floats 35 above
+  { id: 7, x: 2360, yOffset: -135, radius: 20, questionId: 7, ...TOOLS.PERFECT },
 
   // --- Mines ---
-  // Specific Questions (Gauge Q10, Gavel Q11) matched to their 2nd appearance
-  { id: 9, x: 3100, yOffset: 100, radius: 20, questionId: 9, ...TOOLS.APRON }, 
-  { id: 10, x: 3500, yOffset: 300, radius: 20, questionId: 10, ...TOOLS.GAUGE }, // Q10: Gauge Question -> Gauge Tool
-  { id: 11, x: 3850, yOffset: 50, radius: 20, questionId: 11, ...TOOLS.GAVEL }, // Q11: Gavel Question -> Gavel Tool
+  // Platform at x:3000 yOffset:150 - orb floats 35 above (less positive = higher)
+  { id: 9, x: 3110, yOffset: 115, radius: 20, questionId: 9, ...TOOLS.APRON },
 
-  // --- Bridge ---
-  { id: 12, x: 4450, yOffset: -100, radius: 20, questionId: 12, ...TOOLS.CHISEL }, // Q12: Jewels -> Chisel
-  { id: 13, x: 4750, yOffset: -100, radius: 20, questionId: 13, ...TOOLS.ROUGH }, // Q13: Rough Ashlar Q -> Rough Tool
+  // Platform at x:3500 yOffset:350 - orb floats 35 above
+  { id: 10, x: 3725, yOffset: 315, radius: 20, questionId: 10, ...TOOLS.GAUGE },
+
+  // Platform at x:3850 yOffset:100 - orb floats 35 above
+  { id: 11, x: 3910, yOffset: 65, radius: 20, questionId: 11, ...TOOLS.GAVEL },
+
+  // --- Bridge (WIDENED PLATFORMS) ---
+  // Platform at x:4450 yOffset:-50 - orb floats 35 above
+  { id: 12, x: 4510, yOffset: -85, radius: 20, questionId: 12, ...TOOLS.CHISEL },
+
+  // Platform at x:4750 yOffset:-50 - orb floats 35 above
+  { id: 13, x: 4810, yOffset: -85, radius: 20, questionId: 13, ...TOOLS.ROUGH },
 
   // --- High Tower ---
-  { id: 14, x: 5150, yOffset: -200, radius: 20, questionId: 14, ...TOOLS.PERFECT },
-  { id: 15, x: 5250, yOffset: -800, radius: 20, questionId: 15, ...TOOLS.LADDER }, // Q15: Ladder Q -> Ladder Tool
+  // Platform at x:5130 yOffset:-150 - orb floats 35 above
+  { id: 14, x: 5180, yOffset: -185, radius: 20, questionId: 14, ...TOOLS.PERFECT },
 
-  // --- Floating Isles ---
-  { id: 16, x: 5750, yOffset: -650, radius: 20, questionId: 16, ...TOOLS.APRON },
-  { id: 17, x: 6350, yOffset: -450, radius: 20, questionId: 17, ...TOOLS.APRON },
-  { id: 18, x: 6650, yOffset: -350, radius: 20, questionId: 18, ...TOOLS.APRON },
+  // Peak platform at x:5180 yOffset:-750 - orb floats 35 above
+  { id: 15, x: 5350, yOffset: -785, radius: 20, questionId: 15, ...TOOLS.LADDER },
+
+  // --- Floating Isles (WIDENED PLATFORMS) ---
+  // Platform at x:5650 yOffset:-600 - orb floats 35 above
+  { id: 16, x: 5725, yOffset: -635, radius: 20, questionId: 16, ...TOOLS.APRON },
+
+  // Platform at x:6250 yOffset:-440 - orb floats 35 above
+  { id: 17, x: 6325, yOffset: -475, radius: 20, questionId: 17, ...TOOLS.APRON },
+
+  // Platform at x:6550 yOffset:-360 - orb floats 35 above
+  { id: 18, x: 6625, yOffset: -395, radius: 20, questionId: 18, ...TOOLS.APRON },
 
   // --- Final Stretch ---
-  { id: 19, x: 7200, yOffset: -200, radius: 20, questionId: 19, ...TOOLS.APRON },
-  { id: 20, x: 7500, yOffset: -300, radius: 20, questionId: 20, ...TOOLS.APRON },
+  // Platform at x:7200 yOffset:-150 - orb floats 35 above
+  { id: 19, x: 7290, yOffset: -185, radius: 20, questionId: 19, ...TOOLS.APRON },
+
+  // Platform at x:7500 yOffset:-250 - orb floats 35 above
+  { id: 20, x: 7590, yOffset: -285, radius: 20, questionId: 20, ...TOOLS.APRON },
 ];

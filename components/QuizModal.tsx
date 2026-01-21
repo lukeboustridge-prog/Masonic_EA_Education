@@ -22,6 +22,25 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
     setShowFailure(false);
   }, [question]);
 
+  // Keyboard controls for answer selection
+  useEffect(() => {
+    if (showSuccess || showFailure) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key === '1' || key === 'a') {
+        if (shuffledAnswers[0]) handleAnswerClick(shuffledAnswers[0]);
+      } else if (key === '2' || key === 'b') {
+        if (shuffledAnswers[1]) handleAnswerClick(shuffledAnswers[1]);
+      } else if (key === '3' || key === 'c') {
+        if (shuffledAnswers[2]) handleAnswerClick(shuffledAnswers[2]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [shuffledAnswers, showSuccess, showFailure]);
+
   useEffect(() => {
     if (!showSuccess) return;
 
@@ -37,8 +56,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
   }, [showSuccess, onCorrect]);
 
   const handleAnswerClick = (answer: string) => {
-    if (showSuccess) return; // Prevent double taps during success transition
-    
+    if (showSuccess || showFailure) return; // Prevent double taps during transitions
+
     if (answer === question.correctAnswer) {
       setShowSuccess(true);
     } else {
@@ -49,7 +68,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
   return (
     // 1. Overlay: Fixed centering
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 md:p-4">
-      <div 
+      <div
         // 2. Container Configuration
         className={`
           relative flex flex-col
@@ -68,7 +87,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
                 <svg className="w-6 h-6 md:w-8 md:h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
              </div>
              <h2 className="text-lg md:text-2xl font-bold text-green-400 mb-2 md:mb-4 uppercase tracking-widest text-center">Correct</h2>
-             
+
              {question.explanation && (
                <div className="w-full bg-slate-800/80 p-3 md:p-5 rounded-lg border-l-4 border-amber-500 mb-4 md:mb-6 shadow-inner">
                  <p className="text-slate-200 font-serif text-xs md:text-base leading-snug italic text-center md:text-left">
@@ -76,8 +95,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
                  </p>
                </div>
              )}
-             
-             <button 
+
+             <button
                onClick={onCorrect}
                className="px-6 py-2 md:px-8 md:py-3 bg-green-700 hover:bg-green-600 text-white font-bold text-sm md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg active:scale-95"
              >
@@ -86,11 +105,11 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
           </div>
         ) : showFailure ? (
           <div className="flex flex-col items-center justify-center h-full animate-in fade-in duration-300">
-             <div className="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-amber-900/30 rounded-full flex items-center justify-center mb-2 md:mb-4 border-2 border-amber-500">
-                <svg className="w-6 h-6 md:w-8 md:h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+             <div className="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-red-900/30 rounded-full flex items-center justify-center mb-2 md:mb-4 border-2 border-red-500">
+                <svg className="w-6 h-6 md:w-8 md:h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
              </div>
-             <h2 className="text-lg md:text-2xl font-bold text-amber-400 mb-2 md:mb-4 uppercase tracking-widest text-center">Further Light Required</h2>
-             
+             <h2 className="text-lg md:text-2xl font-bold text-red-400 mb-2 md:mb-4 uppercase tracking-widest text-center">Incorrect</h2>
+
              {question.explanation && (
                <div className="w-full bg-slate-800/80 p-3 md:p-5 rounded-lg border-l-4 border-amber-500 mb-4 md:mb-6 shadow-inner">
                  <p className="text-slate-200 font-serif text-xs md:text-base leading-snug italic text-center md:text-left">
@@ -98,12 +117,12 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
                  </p>
                </div>
              )}
-             
-             <button 
+
+             <button
                onClick={onIncorrect}
-               className="px-6 py-2 md:px-8 md:py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold text-sm md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg active:scale-95"
+               className="px-6 py-2 md:px-8 md:py-3 bg-red-700 hover:bg-red-600 text-white font-bold text-sm md:text-lg rounded-lg transition-all uppercase tracking-widest shadow-lg active:scale-95"
              >
-               Try Again
+               Study & Try Again
              </button>
           </div>
         ) : (
@@ -118,7 +137,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
             {/* Answers Grid */}
             <div className="
               grid gap-2 md:gap-4 landscape:gap-3 shrink-0
-              grid-cols-1 
+              grid-cols-1
               landscape:grid-cols-3
             ">
               {shuffledAnswers.map((answer, index) => (
@@ -126,30 +145,30 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
                   key={index}
                   onClick={() => handleAnswerClick(answer)}
                   className="
-                    group relative w-full 
-                    py-3 md:py-5 landscape:py-3 
+                    group relative w-full
+                    py-3 md:py-5 landscape:py-3
                     px-3 md:px-6 landscape:px-3
-                    rounded-lg bg-slate-800 hover:bg-blue-600 
-                    border-2 md:border-4 border-slate-700 hover:border-blue-300 
-                    transition-all active:scale-95 
+                    rounded-lg bg-slate-800 hover:bg-blue-600
+                    border-2 md:border-4 border-slate-700 hover:border-blue-300
+                    transition-all active:scale-95 hover:scale-[1.02]
                     flex items-center landscape:flex-col landscape:justify-center landscape:text-center
                   "
                 >
-                  {/* Circle Indicator */}
+                  {/* Circle Indicator - Now more prominent */}
                   <span className="
-                    flex-shrink-0 
+                    flex-shrink-0
                     w-8 h-8 md:w-12 md:h-12 landscape:w-8 landscape:h-8
-                    flex items-center justify-center rounded-full 
-                    bg-slate-700 group-hover:bg-blue-500 
-                    text-blue-400 group-hover:text-white 
+                    flex items-center justify-center rounded-full
+                    bg-blue-600 group-hover:bg-blue-500
+                    text-white
                     font-black text-sm md:text-xl landscape:text-sm
                     mr-3 md:mr-4 landscape:mr-0 landscape:mb-2
-                    border md:border-2 border-slate-600 group-hover:border-blue-300 
+                    border md:border-2 border-blue-500 group-hover:border-blue-300
                     transition-colors shadow-lg
                   ">
                     {String.fromCharCode(65 + index)}
                   </span>
-                  
+
                   {/* Answer Text */}
                   <span className="text-white text-sm md:text-2xl landscape:text-sm font-semibold leading-tight">
                     {answer}
@@ -157,6 +176,11 @@ const QuizModal: React.FC<QuizModalProps> = ({ question, onCorrect, onIncorrect 
                 </button>
               ))}
             </div>
+
+            {/* Keyboard hint */}
+            <p className="text-slate-500 text-xs mt-4 text-center">
+              Press 1, 2, or 3 to select an answer
+            </p>
           </>
         )}
 

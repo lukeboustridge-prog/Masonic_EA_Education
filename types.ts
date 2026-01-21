@@ -13,6 +13,8 @@ export interface Entity {
   height: number;
 }
 
+export type PlatformType = 'floor' | 'step' | 'pillar_base' | 'platform' | 'altar' | 'ladder_rung' | 'celestial';
+
 export interface Player extends Entity {
   vx: number;
   vy: number;
@@ -28,6 +30,7 @@ export interface Player extends Entity {
 
 export interface Platform extends Entity {
   color: string;
+  type?: PlatformType;
 }
 
 export interface Orb {
@@ -57,6 +60,7 @@ export interface OrbDefinition {
 export enum GameState {
   START_MENU,
   PLAYING,
+  PAUSED,
   LORE,
   QUIZ,
   GAME_OVER,
