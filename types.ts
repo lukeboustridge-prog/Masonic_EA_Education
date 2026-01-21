@@ -54,14 +54,6 @@ export interface OrbDefinition {
   blurb: string;
 }
 
-export interface LeaderboardEntry {
-  id: string;
-  name: string;
-  score: number;
-  date: number;
-  completed: boolean;
-}
-
 export enum GameState {
   START_MENU,
   PLAYING,

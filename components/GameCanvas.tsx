@@ -1,14 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { GameState, Player, Orb, Platform, Question, LeaderboardEntry } from '../types';
-import { 
-  GRAVITY, FRICTION, MOVE_SPEED, JUMP_FORCE, 
+import { GameState, Player, Orb, Platform, Question } from '../types';
+import {
+  GRAVITY, FRICTION, MOVE_SPEED, JUMP_FORCE,
   WORLD_WIDTH, PLATFORM_DATA, ORB_DATA, GOAL_X, QUESTIONS,
   DESIGN_HEIGHT, CHECKPOINTS, NPC_CONFIG, TASSELS, JACOBS_LADDER_LABELS
 } from '../constants';
 import QuizModal from './QuizModal';
 import LoreModal from './LoreModal';
 import { generateSpriteUrl } from '../utils/assetGenerator';
-import { fetchLeaderboard, submitScore as submitLeaderboardScore } from '../api/leaderboard';
+import { submitScore as submitLeaderboardScore } from '../api/leaderboard';
 
 type GameCanvasProps = {
   userId?: string | null;
@@ -42,12 +42,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
   const [checkpointPopup, setCheckpointPopup] = useState(false);
   
-  // Player Identity & Leaderboard
+  // Player Identity
   const [playerName, setPlayerName] = useState('');
   const [showNameInput, setShowNameInput] = useState(false); // New modal trigger
   const [tempName, setTempName] = useState(''); // For input field
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
   // Level Completion Warnings
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
@@ -116,29 +114,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
   // Fullscreen tracking
   const hasTriedFullscreenRef = useRef(false);
 
-  // Load Leaderboard on mount
-  useEffect(() => {
-    const loadLeaderboard = async () => {
-      setIsLoadingLeaderboard(true);
-      const data = await fetchLeaderboard();
-      setLeaderboard(data);
-      setIsLoadingLeaderboard(false);
-    };
-    loadLeaderboard();
-  }, []);
-
-  // Updated to use Supabase API
+  // Submit score to My Year in the Chair
   const saveScoreToLeaderboard = async (finalScore: number, completed: boolean) => {
     const name = playerName.trim() || 'Anonymous';
-    
-    // Submit to Supabase
     await submitLeaderboardScore(name, finalScore, completed, userId);
-    
-    // Refresh local leaderboard display
-    setIsLoadingLeaderboard(true);
-    const updatedData = await fetchLeaderboard();
-    setLeaderboard(updatedData);
-    setIsLoadingLeaderboard(false);
   };
 
   // --- Initialization & Resize ---
@@ -1106,7 +1085,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
     }
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, dimensions, hasApron, warningMessage, score, leaderboard, playerName, isRestored, jwProgress, collectedTassels]); 
+  }, [gameState, dimensions, hasApron, warningMessage, score, playerName, isRestored, jwProgress, collectedTassels]); 
 
   useEffect(() => {
     if (gameState === GameState.PLAYING) {
@@ -1237,9 +1216,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
   };
 
   if (gameState === GameState.START_MENU) {
-    const completedList = leaderboard.filter(e => e.completed).sort((a,b) => b.score - a.score || b.date - a.date).slice(0, 5);
-    const recentList = [...leaderboard].sort((a,b) => b.date - a.date).slice(0, 5);
-
     return (
       <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950 bg-[url('https://www.transparenttextures.com/patterns/dark-leather.png')] p-2 md:p-4 overflow-y-auto">
         {/* Force Landscape Warning for Preview/Desktop */}
@@ -1252,15 +1228,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
           </div>
         )}
 
-        <div className="w-full max-w-5xl max-h-full md:max-h-[90vh] flex flex-col md:flex-row landscape:flex-row gap-4 md:gap-8 bg-slate-900/90 backdrop-blur-md p-4 rounded-xl border-2 border-amber-600 shadow-2xl overflow-y-auto landscape:overflow-hidden">
-          
-          {/* Left Column: Intro & Controls */}
-          <div className="flex-1 flex flex-col items-center text-center justify-center">
-             <div className="mb-2 landscape:mb-0">
+        <div className="w-full max-w-md max-h-full md:max-h-[90vh] flex flex-col bg-slate-900/90 backdrop-blur-md p-6 rounded-xl border-2 border-amber-600 shadow-2xl overflow-y-auto">
+          <div className="flex flex-col items-center text-center justify-center">
+             <div className="mb-4">
                 {/* Logo: Square and Compass (Procedural) */}
-                <img 
+                <img
                     src={generateSpriteUrl('square_compass')}
-                    className="w-16 h-16 md:w-24 md:h-24 landscape:w-14 landscape:h-14 mx-auto mb-2 landscape:mb-1 object-contain" 
+                    className="w-20 h-20 md:w-28 md:h-28 mx-auto mb-4 object-contain"
                     style={{imageRendering:'pixelated'}}
                     onError={(e) => {
                         e.currentTarget.style.display = 'none';
@@ -1269,55 +1243,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
                     }}
                 />
                 <div id="logo-fallback" className="hidden text-4xl mb-2">🏛️</div>
-                <h1 className="text-2xl md:text-4xl landscape:text-2xl font-bold text-amber-500 font-serif tracking-widest uppercase leading-tight">The Entered Apprentice<br/>Challenge</h1>
-                <p className="text-slate-400 mt-1 italic text-sm md:text-base landscape:text-xs">A Journey to Master the First Degree</p>
+                <h1 className="text-2xl md:text-4xl font-bold text-amber-500 font-serif tracking-widest uppercase leading-tight">The Entered Apprentice<br/>Challenge</h1>
+                <p className="text-slate-400 mt-2 italic text-sm md:text-base">A Journey to Master the First Degree</p>
              </div>
-             
-             <div className="w-full max-w-xs space-y-4 landscape:space-y-2 mt-4 landscape:mt-2">
-                {/* NAME INPUT REMOVED - NOW IN GAME */}
-                <p className="text-slate-300 text-sm">Prepare to prove your proficiency.</p>
-                <button onClick={startGame} className="w-full py-3 landscape:py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded transition-colors uppercase tracking-widest shadow-lg text-sm md:text-base">Begin Journey</button>
-             </div>
-          </div>
 
-          {/* Right Column: Leaderboard */}
-          <div className="flex-1 landscape:border-l landscape:border-slate-700 landscape:pl-4 flex flex-col min-h-[200px] md:min-h-[300px]">
-             <h2 className="text-xl md:text-2xl landscape:text-lg font-bold text-slate-200 mb-2 text-center border-b border-slate-700 pb-2">The Trestleboard</h2>
-             {isLoadingLeaderboard ? (
-               <div className="flex-1 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin"></div></div>
-             ) : (
-               <div className="grid grid-cols-2 gap-2 h-full overflow-hidden">
-                  <div className="flex flex-col min-h-0">
-                      <h3 className="text-amber-400 text-[10px] md:text-xs uppercase font-bold mb-1 text-center">Masters of the Work</h3>
-                      <div className="flex-1 bg-slate-800/50 rounded p-1 space-y-1 overflow-y-auto">
-                          {completedList.length === 0 && <p className="text-center text-slate-500 text-[10px] mt-2">None have passed.</p>}
-                          {completedList.map(entry => (
-                              <div key={entry.id} className="flex justify-between items-center text-[10px] md:text-xs p-1 bg-slate-800 rounded border border-amber-900/30">
-                                  <span className="font-bold text-slate-200 truncate max-w-[60px] md:max-w-[80px]">{entry.name}</span>
-                                  <span className="text-amber-500">{entry.score}</span>
-                              </div>
-                          ))}
-                      </div>
-                  </div>
-                  <div className="flex flex-col min-h-0">
-                      <h3 className="text-slate-400 text-[10px] md:text-xs uppercase font-bold mb-1 text-center">Recent Workmen</h3>
-                      <div className="flex-1 bg-slate-800/50 rounded p-1 space-y-1 overflow-y-auto">
-                          {recentList.length === 0 && <p className="text-center text-slate-500 text-[10px] mt-2">No records found.</p>}
-                          {recentList.map(entry => (
-                              <div key={entry.id} className="flex justify-between items-center text-[10px] md:text-xs p-1 bg-slate-800 rounded border border-slate-700">
-                                  <span className="text-slate-300 truncate max-w-[50px] md:max-w-[70px]">{entry.name}</span>
-                                  <div className="flex items-center gap-1 md:gap-2">
-                                      <span className="text-slate-400 font-mono">{entry.score}</span>
-                                      <span className={`${entry.completed ? 'text-green-500' : 'text-red-400'} font-bold text-[8px] md:text-[10px] uppercase`}>
-                                          {entry.completed ? 'Pass' : 'Fail'}
-                                      </span>
-                                  </div>
-                              </div>
-                          ))}
-                      </div>
-                  </div>
-               </div>
-             )}
+             <div className="w-full max-w-xs space-y-4 mt-4">
+                <p className="text-slate-300 text-sm">Prepare to prove your proficiency.</p>
+                <button onClick={startGame} className="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold rounded transition-colors uppercase tracking-widest shadow-lg text-sm md:text-base">Begin Journey</button>
+             </div>
           </div>
         </div>
       </div>
