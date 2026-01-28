@@ -360,6 +360,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         'square_compass',
         'wm',
         'inner_guard',
+        'senior_warden',
+        'junior_warden',
         'officer',
         'grand_master',
         'tassel',
@@ -1414,7 +1416,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
 
   const drawNPC = (ctx: CanvasRenderingContext2D, spriteKey: string, x: number, y: number, frameTime?: number) => {
       const img = spritesRef.current[spriteKey];
-      if (img && img.complete) {
+      if (img && img.complete && img.naturalHeight !== 0) {
           const targetHeight = playerRef.current.height || 45;
           const w = img.naturalWidth || 32;
           const h = img.naturalHeight || 32;
@@ -1422,29 +1424,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
           const scaledW = w * scale;
           const scaledH = h * scale;
 
-          // Enhanced hover animation (Early 2000s polish)
-          const hoverOffset = frameTime ? getHoverOffset(frameTime, 1500) : { x: 0, y: 0 };
-
           ctx.save();
 
-          // Enhanced shadow beneath NPC using shared library
-          drawDropShadow(ctx, x - scaledW / 2, y - scaledH, scaledW, scaledH, {
-            offsetX: 0,
-            offsetY: 4,
-            blur: 8,
-            opacity: 0.3,
-            ellipse: true,
-          });
+          // Draw shadow beneath NPC
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          ctx.beginPath();
+          ctx.ellipse(x, y, scaledW / 2 - 3, 4, 0, 0, Math.PI * 2);
+          ctx.fill();
 
-          // Draw NPC with hover animation
-          ctx.translate(x + hoverOffset.x, y + hoverOffset.y);
-          ctx.scale(1, 1 + hoverOffset.y * 0.003);
-          ctx.drawImage(img, -scaledW / 2, -scaledH, scaledW, scaledH);
-
-          // Add collar/jewel glint effect for officers (Early 2000s polish)
-          if (frameTime && (spriteKey === 'wm' || spriteKey === 'senior_warden' || spriteKey === 'officer')) {
-            drawGlintEffect(ctx, scaledW * 0.15, -scaledH * 0.65, 4, frameTime);
-          }
+          // Draw NPC (standing still)
+          ctx.drawImage(img, x - scaledW / 2, y - scaledH, scaledW, scaledH);
 
           ctx.restore();
       } else {
