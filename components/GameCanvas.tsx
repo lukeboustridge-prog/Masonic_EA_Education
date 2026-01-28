@@ -11,6 +11,66 @@ import LoreModal from './LoreModal';
 import { generateSpriteUrl } from '../utils/assetGenerator';
 import { submitScore as submitLeaderboardScore } from '../api/leaderboard';
 
+// Import shared rendering library (Early 2000s Graphics Refresh)
+import {
+  // Effects
+  setSmoothing,
+  drawDropShadow,
+  drawDynamicShadow,
+  drawBloom,
+  drawCollectibleGlow,
+  drawVignette,
+  drawCornerAO,
+  createScreenShake,
+  updateScreenShake,
+
+  // Particles
+  ParticleSystem,
+  createLandingDust,
+  createJumpDust,
+  createCollectionBurst,
+  createCheckpointEffect,
+  createTorchEmitter,
+
+  // Lighting
+  applyEnhancedLighting,
+  flickerNoise,
+  drawTorchSmoke,
+  createCandleLight,
+
+  // Backgrounds
+  generateStarField,
+  renderStarField,
+  renderFog,
+  renderDepthFog,
+
+  // Sprites
+  createSquashStretch,
+  applyLandingSquash,
+  applyJumpStretch,
+  updateSquashStretch,
+  getBreathingOffset,
+  getHoverOffset,
+  createWalkCycle,
+  updateWalkCycle,
+  getWalkCycleOffsets,
+  drawSpriteGlow,
+  drawGlintEffect,
+
+  // Transitions
+  TransitionManager,
+  ScorePopupManager,
+  drawVictoryCelebration,
+
+  // Colors
+  ENHANCED_COLORS,
+  withAlpha,
+
+  // Types
+  type ScreenShake,
+  type StarField,
+} from '@shared/rendering';
+
 type GameCanvasProps = {
   userId?: string | null;
   userName?: string | null;
@@ -158,7 +218,37 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
     color: 'white' | 'blue' | 'gold';
   }>>([]);
 
-  // Dust particles for visual polish
+  // Enhanced particle system (shared library)
+  const particleSystemRef = useRef<ParticleSystem>(new ParticleSystem(100));
+
+  // Enhanced screen shake state (shared library)
+  const screenShakeStateRef = useRef<ScreenShake>({
+    x: 0,
+    y: 0,
+    intensity: 0,
+    decay: 0.9,
+    active: false,
+  });
+
+  // Transition manager for screen effects
+  const transitionManagerRef = useRef<TransitionManager>(new TransitionManager());
+
+  // Score popup manager
+  const scorePopupManagerRef = useRef<ScorePopupManager>(new ScorePopupManager());
+
+  // Squash/stretch state for player
+  const squashStretchRef = useRef(createSquashStretch());
+
+  // Walk cycle state for smoother animation
+  const walkCycleRef = useRef(createWalkCycle());
+
+  // Previous grounded state for landing detection
+  const wasGroundedRef = useRef(false);
+
+  // Enhanced star field with more properties
+  const enhancedStarsRef = useRef<StarField[]>([]);
+
+  // Legacy dust particles (kept for compatibility)
   const particlesRef = useRef<Array<{
     x: number;
     y: number;
@@ -254,6 +344,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
       }
     }
     starsRef.current = stars;
+
+    // Also generate enhanced star field using shared library
+    enhancedStarsRef.current = generateStarField(WORLD_WIDTH, DESIGN_HEIGHT + 800, 0.002);
   }, []);
 
  
@@ -399,6 +492,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
       p.coyoteTimer = 0;
       jumpBufferRef.current = 0; // Clear buffer
       playSound('jump');
+
+      // Create jump dust particles and apply stretch effect (Early 2000s polish)
+      createJumpDust(
+        particleSystemRef.current,
+        p.x + p.width / 2,
+        p.y + p.height
+      );
+      applyJumpStretch(squashStretchRef.current);
     } else if (p.jumpCount < 2) {
       p.vy = JUMP_FORCE;
       p.jumpCount++;
@@ -1321,21 +1422,29 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
           const scaledW = w * scale;
           const scaledH = h * scale;
 
-          // Subtle breathing animation
-          const breathe = frameTime ? Math.sin(frameTime / 1000) * 0.5 : 0;
+          // Enhanced hover animation (Early 2000s polish)
+          const hoverOffset = frameTime ? getHoverOffset(frameTime, 1500) : { x: 0, y: 0 };
 
           ctx.save();
 
-          // Draw shadow beneath NPC
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-          ctx.beginPath();
-          ctx.ellipse(x, y, scaledW / 2 - 3, 4, 0, 0, Math.PI * 2);
-          ctx.fill();
+          // Enhanced shadow beneath NPC using shared library
+          drawDropShadow(ctx, x - scaledW / 2, y - scaledH, scaledW, scaledH, {
+            offsetX: 0,
+            offsetY: 4,
+            blur: 8,
+            opacity: 0.3,
+            ellipse: true,
+          });
 
-          // Draw NPC with subtle scale animation
-          ctx.translate(x, y);
-          ctx.scale(1, 1 + breathe * 0.015);
+          // Draw NPC with hover animation
+          ctx.translate(x + hoverOffset.x, y + hoverOffset.y);
+          ctx.scale(1, 1 + hoverOffset.y * 0.003);
           ctx.drawImage(img, -scaledW / 2, -scaledH, scaledW, scaledH);
+
+          // Add collar/jewel glint effect for officers (Early 2000s polish)
+          if (frameTime && (spriteKey === 'wm' || spriteKey === 'senior_warden' || spriteKey === 'officer')) {
+            drawGlintEffect(ctx, scaledW * 0.15, -scaledH * 0.65, 4, frameTime);
+          }
 
           ctx.restore();
       } else {
@@ -1862,7 +1971,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         
-        ctx.imageSmoothingEnabled = false;
+        // Enable smoothing for backgrounds, disable for sprites (Early 2000s polish)
+        setSmoothing(ctx, true); // Start with smoothing enabled for backgrounds
 
         const { w, h } = dimensions;
         // Safety for zero dimensions
@@ -1926,11 +2036,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
                 player.vx = 0;
                 keysRef.current = {}; // Stop inputs
 
-                let response = `At the door of the lodge stands ${resolvedRank} ${resolvedName}, who was initiated on ${resolvedInitiationDate}.`;
+                let response = `Whom have you there? At the door of the lodge stands ${resolvedRank} ${resolvedName}, who was initiated on ${resolvedInitiationDate}. The Senior Warden awaits to invest you with the badge of an Entered Apprentice.`;
                 if (resolvedIsGrandOfficer === true) {
-                    response = `A Grand Lodge Officer? I am expecting great things of you ${resolvedName}, ${resolvedRank}. Brother Inner Guard, let him be admitted to test his knowledge.`;
+                    response = `Whom have you there? A Grand Lodge Officer? I am expecting great things of you ${resolvedName}, ${resolvedRank}. The Senior Warden awaits to invest you with the badge of an Entered Apprentice.`;
                 } else if (resolvedIsGrandOfficer === false) {
-                    response = 'Let him be admitted to test his knowledge.';
+                    response = 'Whom have you there? Let him be admitted to test his knowledge. The Senior Warden awaits to invest you with the badge of an Entered Apprentice.';
                 }
 
                 const innerGuardOrbMock: Orb = {
@@ -1955,24 +2065,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
             }
         }
 
-        // 1. WORSHIPFUL MASTER INTERACTION
-        const masterX = NPC_CONFIG.MASTER.x; 
-        const masterY = groundRefY; // On the ground
-        if (!isRestored) {
-            const distToMaster = Math.abs((player.x + player.width/2) - masterX);
-            if (distToMaster < 50 && Math.abs((player.y + player.height) - masterY) < 50) {
-                // Trigger Interaction
+        // 1. SENIOR WARDEN INTERACTION (Presents EA Apron)
+        const swX = NPC_CONFIG.SENIOR_WARDEN.x; 
+        const swY = groundRefY; // On the ground
+        const wmX = NPC_CONFIG.WORSHIPFUL_MASTER.x;
+        const wmY = groundRefY + NPC_CONFIG.WORSHIPFUL_MASTER.yOffset;
+        if (!isRestored && innerGuardGreetedRef.current) {
+            if (player.x > swX - 30) {
+                player.x = swX - 30;
                 player.vx = 0;
                 keysRef.current = {}; // Stop movement
-                
-                const masterOrbMock: Orb = {
+
+                const swOrbMock: Orb = {
                     id: 999,
                     x: 0, y: 0, radius: 0, active: true,
-                    name: "Worshipful Master",
-                    spriteKey: "worshipful_master",
-                    blurb: "Congratulation on your Initiation. I now remove your blindfold and cable-tow, and restore you to your personal comforts. Seek the hidden knowledge within this level to prove your proficiency."
+                    name: "Senior Warden",
+                    spriteKey: "senior_warden",
+                    blurb: "Brother, I invest you with the badge of an Entered Apprentice. It is more ancient than the Golden Fleece or Roman Eagle, and more honorable than the Star and Garter."
                 };
-                setActiveOrb(masterOrbMock);
+                setActiveOrb(swOrbMock);
                 setGameState(GameState.LORE);
                 playSound('lore');
             }
@@ -2040,13 +2151,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         }
 
         // 4. SENIOR WARDEN (GOAL) INTERACTION
-        const swX = NPC_CONFIG.SENIOR_WARDEN.x;
-        const swY = groundRefY;
-        const distToSW = Math.abs((player.x + player.width/2) - swX);
+        // Worshipful Master at the East (goal)
+        const distToWM = Math.abs((player.x + player.width/2) - wmX);
         const maxScore = ORB_DATA.length * 100;
         
         // Trigger win if close to SW
-        if (distToSW < 50 && Math.abs((player.y + player.height) - swY) < 50) {
+        if (distToWM < 50 && Math.abs((player.y + player.height) - wmY) < 50) {
             if (score >= maxScore) {
                 // Perfect Ashlar Bonus?
                 let bonus = 0;
@@ -2060,12 +2170,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
                 playSound('win');
                 return;
             } else {
-                 player.x = swX - 60;
+                 player.x = wmX - 60;
                  player.vx = 0;
                  if (!warningMessage) {
                     const toolsCollected = Math.floor(score / 100);
                     const totalTools = ORB_DATA.length;
-                    setWarningMessage(`Grand Master: "The door to the Fellow Craft degree remains sealed. You have collected ${toolsCollected} of ${totalTools} Working Tools. Return when you have proven your proficiency."`);
+                    setWarningMessage(`Worshipful Master: "The door to the Fellow Craft degree remains sealed. You have collected ${toolsCollected} of ${totalTools} Working Tools. Return when you have proven your proficiency."`);
                     playSound('error');
                     if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
                     warningTimeoutRef.current = window.setTimeout(() => setWarningMessage(null), 4000);
@@ -2079,7 +2189,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
                 lastCheckpointRef.current = { x: cp.x, y: groundRefY + cp.yOffset - 100 };
                 setCheckpointPopup(true);
                 playSound('lore');
-                
+
+                // Create checkpoint celebration particles (Early 2000s polish)
+                createCheckpointEffect(
+                  particleSystemRef.current,
+                  cp.x,
+                  groundRefY + cp.yOffset - 30
+                );
+
+                // Flash effect for checkpoint
+                transitionManagerRef.current.flash(200, '#fbbf24', 0.2);
+
                 if (checkpointTimeoutRef.current) window.clearTimeout(checkpointTimeoutRef.current);
                 checkpointTimeoutRef.current = window.setTimeout(() => {
                     setCheckpointPopup(false);
@@ -2091,9 +2211,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         if (player.x > WORLD_WIDTH - player.width) { player.x = WORLD_WIDTH - player.width; player.vx = 0; }
         
         if (player.y > groundRefY + 600) {
-        // Trigger screen shake effect
+        // Trigger enhanced screen shake effect
+        screenShakeStateRef.current = createScreenShake(12, 0.85);
+
+        // Also use legacy state for compatibility
         setScreenShake({ x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 10 });
-        setTimeout(() => setScreenShake({ x: 0, y: 0 }), 100);
+        setTimeout(() => setScreenShake({ x: 0, y: 0 }), 150);
+
+        // Trigger fade transition for death
+        transitionManagerRef.current.flash(150, '#ff0000', 0.3);
 
         player.x = lastCheckpointRef.current.x;
         player.y = lastCheckpointRef.current.y;
@@ -2152,6 +2278,46 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         }
         if (jumpBufferRef.current > 0) jumpBufferRef.current--;
 
+        // === ENHANCED VISUAL EFFECTS (Early 2000s Graphics Refresh) ===
+
+        // Landing detection for dust particles and squash effect
+        if (player.isGrounded && !wasGroundedRef.current) {
+          // Player just landed
+          const landingImpact = Math.abs(player.vy);
+          if (landingImpact > 2) {
+            // Create landing dust particles
+            createLandingDust(
+              particleSystemRef.current,
+              player.x + player.width / 2,
+              player.y + player.height,
+              Math.min(1, landingImpact / 10)
+            );
+            // Apply squash effect
+            applyLandingSquash(squashStretchRef.current, landingImpact);
+          }
+        }
+        wasGroundedRef.current = player.isGrounded;
+
+        // Update squash/stretch interpolation
+        updateSquashStretch(squashStretchRef.current);
+
+        // Update walk cycle for animation
+        updateWalkCycle(walkCycleRef.current, player.vx, 16.67);
+
+        // Update particle system
+        particleSystemRef.current.update(16.67);
+
+        // Update transitions
+        transitionManagerRef.current.update();
+
+        // Update score popups
+        scorePopupManagerRef.current.update();
+
+        // Update screen shake
+        if (screenShakeStateRef.current.active) {
+          screenShakeStateRef.current = updateScreenShake(screenShakeStateRef.current, 16.67);
+        }
+
         for (const orb of orbs) {
         if (!orb.active) continue;
         const dx = (player.x + player.width / 2) - orb.x;
@@ -2194,9 +2360,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         ctx.clearRect(0,0,w,h);
         ctx.save();
         ctx.scale(scaleRatio, scaleRatio);
+        // Use enhanced screen shake if active, otherwise use state
+        const shakeX = screenShakeStateRef.current.active
+          ? screenShakeStateRef.current.x
+          : screenShake.x;
+        const shakeY = screenShakeStateRef.current.active
+          ? screenShakeStateRef.current.y
+          : screenShake.y;
+
         ctx.translate(
-          -Math.floor(cameraRef.current.x) + screenShake.x,
-          -Math.floor(cameraRef.current.y) + screenShake.y
+          -Math.floor(cameraRef.current.x) + shakeX,
+          -Math.floor(cameraRef.current.y) + shakeY
         );
 
         // Cache frame time for all animations (performance optimization)
@@ -2207,15 +2381,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         // Check if door is unlocked (all orbs collected)
         const isDoorUnlocked = score >= ORB_DATA.length * 100;
 
-        // Draw Goal Area arch with temple door (behind the Grand Master)
-        drawGoalArea(ctx, swX, swY, frameTime, isDoorUnlocked);
+        // Draw Goal Area arch with temple door (behind the Worshipful Master)
+        drawGoalArea(ctx, wmX, wmY, frameTime, isDoorUnlocked);
 
         // Draw Officers (NPCs) with breathing animation
         drawNPC(ctx, 'inner_guard', NPC_CONFIG.INNER_GUARD.x, groundRefY + NPC_CONFIG.INNER_GUARD.yOffset, frameTime);
-        drawNPC(ctx, 'wm', masterX, masterY, frameTime);
+        drawNPC(ctx, 'senior_warden', swX, swY, frameTime);
         drawNPC(ctx, 'officer', jwX, jwY, frameTime);
-        // Grand Master awaits at the end (replacing Senior Warden)
-        drawNPC(ctx, 'grand_master', swX, swY, frameTime);
+        const endNpcKey = godModeRef.current ? 'grand_master' : 'wm';
+        drawNPC(ctx, endNpcKey, wmX, wmY, frameTime);
 
         CHECKPOINTS.forEach(cp => {
             const cpImg = spritesRef.current['square_compass'];
@@ -2417,7 +2591,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         // Senior Warden Platform (Goal Area)
         // No longer a red box, rely on the NPC drawing above
 
-        // Orbs rendered as floating tools with glow
+        // Orbs rendered as floating tools with enhanced glow (Early 2000s polish)
         orbs.forEach(orb => {
           if (!orb.active) return;
           const img = spritesRef.current[orb.spriteKey];
@@ -2430,25 +2604,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
           );
           const isNearby = distToPlayer < 80;
 
-          // Floating animation
+          // Floating animation with smoother easing
           const floatOffset = Math.sin(frameTime / 400 + orb.id) * 4;
           const orbY = orb.y + floatOffset;
 
           ctx.save();
 
-          // Golden glow around tool (enhanced when nearby)
-          const basePulse = Math.sin(frameTime / 300 + orb.id) * 0.15 + 0.85;
-          const glowIntensity = isNearby ? basePulse * 0.5 : basePulse * 0.25;
-          const glowRadius = isNearby ? 35 : 28;
+          // Enhanced collectible glow using shared library
+          if (isNearby) {
+            // Use enhanced bloom when nearby
+            drawCollectibleGlow(ctx, orb.x, orbY, toolSize / 2, frameTime);
+          } else {
+            // Standard glow when not nearby
+            drawBloom(ctx, orb.x, orbY, {
+              radius: 35,
+              intensity: 0.35,
+              color: ENHANCED_COLORS.GOLD_BRIGHT,
+              layers: 2,
+              pulse: true,
+              pulseSpeed: 400,
+              pulseAmount: 0.15,
+            }, frameTime);
+          }
 
-          const toolGlow = ctx.createRadialGradient(orb.x, orbY, 0, orb.x, orbY, glowRadius);
-          toolGlow.addColorStop(0, `rgba(251, 191, 36, ${glowIntensity})`);
-          toolGlow.addColorStop(0.5, `rgba(255, 215, 0, ${glowIntensity * 0.4})`);
-          toolGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
-          ctx.fillStyle = toolGlow;
-          ctx.beginPath();
-          ctx.arc(orb.x, orbY, glowRadius, 0, Math.PI * 2);
-          ctx.fill();
+          // Disable smoothing for crisp sprite rendering
+          setSmoothing(ctx, false);
 
           // Draw tool sprite
           if (img && img.complete && img.naturalHeight !== 0) {
@@ -2466,19 +2646,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
             ctx.fillText(orb.name[0], orb.x, orbY);
           }
 
-          // Sparkles when player is nearby
-          if (isNearby) {
-            const sparkleAngle = frameTime / 300;
-            ctx.fillStyle = 'rgba(255, 248, 220, 0.9)';
-            for (let i = 0; i < 4; i++) {
-              const angle = sparkleAngle + (i * Math.PI / 2);
-              const sparkleX = orb.x + Math.cos(angle) * (toolSize / 2 + 8);
-              const sparkleY = orbY + Math.sin(angle) * (toolSize / 2 + 8);
-              ctx.beginPath();
-              ctx.arc(sparkleX, sparkleY, 2, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
+          // Re-enable smoothing
+          setSmoothing(ctx, true);
 
           ctx.restore();
         });
@@ -2545,6 +2714,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
                 ctx.restore();
             }
         });
+
+        // === RENDER PARTICLES (Early 2000s Graphics Refresh) ===
+        particleSystemRef.current.render(ctx, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
+
+        // === DRAW PLAYER WITH ENHANCED EFFECTS ===
+
+        // Draw player drop shadow (Early 2000s polish)
+        // Find ground below player for shadow
+        let groundBelowPlayer = groundRefY;
+        for (const plat of platforms) {
+          if (player.x + player.width > plat.x && player.x < plat.x + plat.width) {
+            if (plat.y > player.y && plat.y < groundBelowPlayer) {
+              groundBelowPlayer = plat.y;
+            }
+          }
+        }
+        drawDynamicShadow(
+          ctx,
+          player.x,
+          groundBelowPlayer,
+          player.width,
+          player.y + player.height,
+          { opacity: 0.25, blur: 10 }
+        );
 
         // Draw player - use Grand Master sprite when God Mode is active
         if (godModeRef.current) {
@@ -2621,9 +2814,49 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
         }
 
         // Apply candlelit atmosphere lighting overlay (only when restored/not blindfolded)
+        // Uses enhanced lighting with bloom effects (Early 2000s Graphics Refresh)
         if (isRestored) {
-          applyLighting(ctx, LIGHT_SOURCES, cameraRef.current.x, cameraRef.current.y, viewW, viewH);
+          // Convert LIGHT_SOURCES to enhanced format
+          const enhancedLights = LIGHT_SOURCES.map(light => ({
+            ...light,
+            flicker: true,
+            flickerSpeed: 0.012,
+            flickerAmount: 0.15,
+            pulseSpeed: 800,
+            pulseAmount: 0.05,
+          }));
+
+          applyEnhancedLighting(
+            ctx,
+            enhancedLights,
+            cameraRef.current.x,
+            cameraRef.current.y,
+            viewW,
+            viewH,
+            frameTime,
+            {
+              enableBloom: true,
+              bloomLayers: 3,
+              enableColorBleeding: true,
+              bleedRadius: 40,
+              enableFlicker: true,
+              flickerIntensity: 0.12,
+            }
+          );
+
+          // Add torch smoke near torch light sources
+          for (const light of LIGHT_SOURCES) {
+            if (light.color === TEMPLE_COLORS.TORCH_GLOW) {
+              if (light.x > cameraRef.current.x - 50 &&
+                  light.x < cameraRef.current.x + viewW + 50) {
+                drawTorchSmoke(ctx, light.x, light.y, frameTime, 0.2);
+              }
+            }
+          }
         }
+
+        // Render score popups
+        scorePopupManagerRef.current.render(ctx, cameraRef.current.x, cameraRef.current.y);
 
         ctx.restore();
 
@@ -2660,24 +2893,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
             ctx.fillStyle = warmth;
             ctx.fillRect(0, 0, w, h);
         } else {
-            // NORMAL VIGNETTE with atmospheric glow
-            const radius = Math.max(w, h) * 0.8;
-
-            // Base vignette
-            const vignette = ctx.createRadialGradient(w/2, h/2, radius * 0.4, w/2, h/2, radius);
-            vignette.addColorStop(0, 'rgba(0,0,0,0)');
-            vignette.addColorStop(0.7, 'rgba(0,0,0,0.3)');
-            vignette.addColorStop(1, 'rgba(0,0,0,0.65)');
-            ctx.fillStyle = vignette;
-            ctx.fillRect(0, 0, w, h);
+            // NORMAL VIGNETTE with atmospheric glow (Enhanced - Early 2000s polish)
+            drawVignette(ctx, w, h, 0.45);
 
             // Subtle golden glow at edges (temple atmosphere)
+            const radius = Math.max(w, h) * 0.8;
             const atmosphericGlow = ctx.createRadialGradient(w/2, h/2, radius * 0.6, w/2, h/2, radius);
             atmosphericGlow.addColorStop(0, 'rgba(251, 191, 36, 0)');
             atmosphericGlow.addColorStop(1, 'rgba(251, 191, 36, 0.06)');
             ctx.fillStyle = atmosphericGlow;
             ctx.fillRect(0, 0, w, h);
         }
+
+        // Render screen transitions (fade, flash effects)
+        transitionManagerRef.current.render(ctx, w, h);
 
         // Grand Master Mode indicator when God Mode is active
         if (godModeRef.current) {
@@ -2716,8 +2945,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
   }, [gameState, gameLoop]);
 
   const handleLoreContinue = () => {
-      // Special check for Master NPC (Fake Orb ID 999)
+      // Special check for Senior Warden NPC (Fake Orb ID 999)
       if (activeOrb && activeOrb.id === 999) {
+          const apronOrb = ORB_DATA.find(o => o.spriteKey === 'apron');
+          if (apronOrb && !orbsStateRef.current.has(apronOrb.id)) {
+              orbsStateRef.current.add(apronOrb.id);
+              setScore(s => s + 100);
+              setHasApron(true);
+          }
           setIsRestored(true);
           setActiveOrb(null);
           setGameState(GameState.PLAYING);
@@ -2768,6 +3003,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ userId, userName, rank, initiat
   const handleCorrectAnswer = () => {
     playSound('collect');
     setScore(s => s + 100);
+
+    // Create collection burst particles and score popup (Early 2000s polish)
+    if (activeOrb) {
+      const orbY = DESIGN_HEIGHT - 40 + (activeOrb as any).yOffset;
+      createCollectionBurst(particleSystemRef.current, activeOrb.x, orbY);
+      scorePopupManagerRef.current.addScore(activeOrb.x, orbY - 30, 100);
+    }
 
     // Check if this was the JW Interaction
     if (activeQuestion && (activeQuestion.id === 801 || activeQuestion.id === 802 || activeQuestion.id === 8)) {

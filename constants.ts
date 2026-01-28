@@ -1,21 +1,52 @@
 import { Question, Platform, Orb, OrbDefinition, PlatformType } from './types';
 
-// Temple Visual Theme Colors
+// Temple Visual Theme Colors (Enhanced - Early 2000s Graphics Refresh)
 export const TEMPLE_COLORS = {
+  // Stone Colors - Richer tones with more depth
+  STONE_DARKEST: '#1f1d1a',
   STONE_DARK: '#2d2a26',
   STONE_MID: '#4a4540',
   STONE_LIGHT: '#6b6560',
   STONE_ACCENT: '#8b8580',
+  STONE_HIGHLIGHT: '#a5a095',
+
+  // Warm Light Colors
   CANDLE_GLOW: '#ffb347',
+  CANDLE_CORE: '#fff4e0',
   TORCH_GLOW: '#ff8c00',
+  TORCH_CORE: '#ffcc66',
   AMBIENT_WARM: '#3d3428',
+  FIRE_RED: '#ff4500',
+
+  // Gold Tones - More variation
+  GOLD_DARK: '#b8860b',
   GOLD: '#d4af37',
   GOLD_BRIGHT: '#ffd700',
+  GOLD_PALE: '#f0e68c',
+  GOLD_WHITE: '#fffacd',
+
+  // Royal Blues - Temple atmosphere
+  ROYAL_BLUE_DARK: '#0d1f3c',
   ROYAL_BLUE: '#1e3a5f',
+  ROYAL_BLUE_LIGHT: '#2e5a8f',
+  CELESTIAL_BLUE: '#4a7ab0',
+
+  // Mosaic Floor
   MOSAIC_WHITE: '#e8e4df',
   MOSAIC_BLACK: '#1a1a1a',
+  MOSAIC_CREAM: '#f5f5dc',
+
+  // Sky & Atmosphere
   CEILING_DARK: '#1a1510',
   NIGHT_SKY: '#0d1117',
+  NIGHT_DEEP: '#050810',
+  STARLIGHT: '#aabbff',
+  MOONLIGHT: '#c8d4ff',
+
+  // UI Colors
+  SUCCESS_GREEN: '#4ade80',
+  ERROR_RED: '#f87171',
+  WARNING_AMBER: '#fbbf24',
 };
 
 // Room definitions for the temple journey
@@ -106,9 +137,9 @@ export const CHECKPOINTS = [
 // NPC Locations
 export const NPC_CONFIG = {
   INNER_GUARD: { x: 200, yOffset: 0 },
-  MASTER: { x: 350, yOffset: 0 },
+  SENIOR_WARDEN: { x: 350, yOffset: 0 },
   JUNIOR_WARDEN: { x: 2700, yOffset: -100 },
-  SENIOR_WARDEN: { x: 7800, yOffset: 0 },
+  WORSHIPFUL_MASTER: { x: 7800, yOffset: 0 },
 };
 
 // Tassels (Cardinal Virtues) - Located on DISTINCT platforms away from orbs

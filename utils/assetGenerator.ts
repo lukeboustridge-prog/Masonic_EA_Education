@@ -2,7 +2,30 @@
 
 import { BASE64_SPRITES } from './base64Assets';
 
-const FILE_BASED_SPRITES = ['wm', 'inner_guard', 'officer', 'Grand_master', 'Grand_Steward'] as const;
+const FILE_BASED_SPRITES = [
+  'wm',
+  'inner_guard',
+  'officer',
+  'Grand_master',
+  'Grand_Steward',
+  'gauge',
+  'Gavel',
+  'chisel',
+  'rough_ashlar',
+  'perfect_ashlar',
+  'ladder',
+  'tassle',
+  'ea_apron',
+  'square_compass',
+  'square',
+  'level',
+  'Plumb_rule',
+  'Corn',
+  'G',
+  'wisdom',
+  'strength',
+  'beauty'
+] as const;
 const FILE_KEY_MAP: Record<string, string> = {
   worshipful_master: 'wm',
   wm: 'wm',
@@ -10,7 +33,24 @@ const FILE_KEY_MAP: Record<string, string> = {
   senior_warden: 'officer',
   officer: 'officer',
   grand_master: 'Grand_master',
-  grand_steward: 'Grand_Steward'
+  grand_steward: 'Grand_Steward',
+  apron: 'ea_apron',
+  gauge: 'gauge',
+  gavel: 'Gavel',
+  chisel: 'chisel',
+  rough_ashlar: 'rough_ashlar',
+  perfect_ashlar: 'perfect_ashlar',
+  ladder: 'ladder',
+  tassel: 'tassle',
+  square_compass: 'square_compass',
+  square: 'square',
+  level: 'level',
+  plumb: 'Plumb_rule',
+  corn: 'Corn',
+  letter_g: 'G',
+  pillar_ionic: 'wisdom',
+  pillar_doric: 'strength',
+  pillar_corinthian: 'beauty'
 };
 const PROCEDURAL_KEY_MAP: Record<string, string> = {
   wm: 'worshipful_master',
